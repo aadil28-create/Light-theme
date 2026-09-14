@@ -1,0 +1,146 @@
+START PROJECT + DESIGN SYSTEM + APP STRUCTURE
+
+Create a FRONTEND/UI DESIGN DONOR for an existing production real-time Live Quiz Platform.
+
+IMPORTANT ARCHITECTURE RULE:
+
+The real production application already has its own backend, database, Host authentication, REST APIs, WebSocket infrastructure, quiz engine, timers, scoring, leaderboard, recovery, results, security controls, and deployment infrastructure.
+
+This Replit project is ONLY for designing and producing the frontend UI that may later be selectively integrated into that existing application.
+
+DO NOT create or integrate:
+
+Supabase
+Firebase
+any database
+authentication backend/provider
+serverless functions
+edge functions
+REST server
+WebSocket server
+Socket.IO server
+authoritative scoring
+authoritative timers
+authoritative session state
+authoritative answer locking
+Host signup
+subscriptions/payments
+client-generated production session codes
+replacement backend architecture
+
+Use React + TypeScript + Vite principles.
+
+Use reusable components.
+
+Mock/demo data is allowed only for visual preview and must remain clearly isolated from production-style components.
+
+The existing production backend will remain authoritative for:
+
+Host login
+session creation
+session codes
+participant admission
+participant approval
+lobby lock
+quiz lifecycle
+current question
+timers
+answer locking
+scoring
+leaderboard
+results
+reconnect/recovery
+
+Do NOT hardcode the current production Tailscale hostname.
+
+The final production UI must be capable of using the runtime public HTTPS origin or a supplied public join URL.
+
+DESIGN GOAL
+
+Create a polished, modern, professional live-event quiz interface.
+
+You choose:
+
+color palette
+typography
+spacing
+component styling
+surfaces
+borders
+shadows
+icons
+restrained animation
+
+Host screens should be optimized primarily for laptop/desktop operation.
+
+Participant screens should be optimized primarily for smartphones.
+
+Prioritize:
+
+excellent readability
+clear hierarchy
+accessibility
+responsiveness
+strong state distinction
+professional polish
+energetic but restrained presentation
+
+Avoid:
+
+excessive gradients
+unnecessary animations
+low contrast
+tiny controls
+visual clutter
+overly dense admin-dashboard styling
+
+For this FIRST stage, build ONLY:
+
+overall visual design system
+application shell
+role structure
+reusable foundational components
+route placeholders
+
+The two roles are:
+
+Host
+Participant
+
+Create foundational components such as:
+
+AppShell
+HostShell
+ParticipantShell
+Header
+Navigation
+PageHeader
+Breadcrumbs
+StatusBadge
+LoadingState
+EmptyState
+ErrorState
+ConfirmationDialog
+ConnectionStatus
+
+Establish route placeholders for:
+
+/
+/host
+/host/dashboard
+/host/templates
+/host/templates/
+/host/templates//questions
+/host/session/new
+/host/session/
+/host/results/
+/participant
+/participant/session/
+
+Do NOT implement detailed quiz workflows yet.
+
+Do NOT create real networking.
+
+At the end of this stage, the app should have a coherent design system and navigable structural shell only.
+
+STOP after completing this stage.

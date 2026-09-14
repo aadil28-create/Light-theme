@@ -1,6 +1,6 @@
-# [Project name]
+# Live Quiz UI System
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Frontend/UI design donor for a production real-time live quiz platform, focused on reusable shells and structural states rather than backend behavior.
 
 ## Run & Operate
 
@@ -9,7 +9,7 @@ _Replace the heading above with the project's name, and this line with one sente
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- The current design donor intentionally does not require a database or API server.
 
 ## Stack
 
@@ -22,23 +22,29 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/mockup-sandbox/src/components/mockups/live-quiz/` — live host and participant shell previews plus shared primitives
+- `artifacts/mockup-sandbox/src/components/mockups/live-quiz/_shared/demoData.ts` — isolated visual-only demo data
+- `artifacts/mockup-sandbox/src/components/mockups/live-quiz/_group.css` — Signalhouse visual tokens, typography, and motion
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- The existing production backend remains authoritative; this project is UI-only and must not grow replacement networking, auth, scoring, timers, or persistence.
+- Host and participant experiences are separate previews because their primary operating environments differ: desktop for hosts, narrow mobile for participants.
+- Route placeholders use local preview navigation only, so the shell can be evaluated without pretending to implement production session state.
+- Shared shell primitives live beside the mockups and demo data is kept separate from reusable UI pieces.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+The first stage provides a polished Signalhouse visual system, a desktop host command center, a mobile participant waiting room, role switching, route placeholders, connection/status states, and foundational loading/empty/error/confirmation components.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Keep future work within the staged scope of the frontend UI donor unless the user explicitly requests integration work.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Do not hardcode the old production hostname or add a replacement backend.
+- Keep mockup styles self-contained; avoid changing the sandbox-wide `src/index.css` for one design direction.
 
 ## Pointers
 
