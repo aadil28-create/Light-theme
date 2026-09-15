@@ -6,19 +6,29 @@ import {
   BarChart3,
   BookOpen,
   Check,
+  CheckCircle2,
   CirclePlus,
   ClipboardList,
   Clock3,
+  Copy,
   FilePenLine,
   LayoutDashboard,
   ListChecks,
+  Link2,
+  LockKeyhole,
   LogOut,
   MoreHorizontal,
   Play,
+  QrCode,
   Radio,
   Save,
   Trash2,
   Users,
+  UserCheck,
+  UserRound,
+  UserX,
+  UnlockKeyhole,
+  WifiOff,
   X,
 } from "lucide-react";
 import { AppShell } from "./_shared/AppShell";
@@ -55,6 +65,31 @@ type Question = {
 };
 
 type TemplateDraft = Pick<Template, "title" | "description">;
+
+type SessionSettings = {
+  templateId: string;
+  requireApproval: boolean;
+  maximumParticipants: string;
+};
+
+type ParticipantStatus = "Pending" | "Approved" | "Connected" | "Disconnected" | "Rejected" | "Removed";
+
+type Participant = {
+  id: string;
+  name: string;
+  initials: string;
+  joined: string;
+  status: ParticipantStatus;
+};
+
+const initialParticipants: Participant[] = [
+  { id: "mara", name: "Mara Chen", initials: "MC", joined: "just now", status: "Pending" },
+  { id: "owen", name: "Owen Bell", initials: "OB", joined: "2 min ago", status: "Approved" },
+  { id: "rhea", name: "Rhea Patel", initials: "RP", joined: "3 min ago", status: "Connected" },
+  { id: "sam", name: "Sam Ortega", initials: "SO", joined: "4 min ago", status: "Disconnected" },
+  { id: "jules", name: "Jules Hart", initials: "JH", joined: "5 min ago", status: "Rejected" },
+  { id: "noah", name: "Noah Williams", initials: "NW", joined: "6 min ago", status: "Removed" },
+];
 
 const initialTemplates: Template[] = [
   {
@@ -379,7 +414,7 @@ function TemplateRow({
           <button type="button" onClick={() => navigate(`/host/templates/${template.id}`)} className="lq-focus rounded-lg px-2.5 py-2 text-xs font-bold text-[var(--lq-ink-soft)] hover:bg-[#ebe7de] hover:text-[var(--lq-ink)]">Open</button>
           <button type="button" onClick={() => navigate(`/host/templates/${template.id}`)} className="lq-focus inline-flex items-center gap-1.5 rounded-lg border border-[var(--lq-line)] bg-[var(--lq-card)] px-2.5 py-2 text-xs font-bold text-[var(--lq-ink-soft)] hover:border-[#d6a496] hover:text-[var(--lq-signal-deep)]"><FilePenLine className="h-3.5 w-3.5" /> Edit</button>
           <button type="button" onClick={() => navigate(`/host/templates/${template.id}/questions`)} className="lq-focus inline-flex items-center gap-1.5 rounded-lg border border-[var(--lq-line)] bg-[var(--lq-card)] px-2.5 py-2 text-xs font-bold text-[var(--lq-ink-soft)] hover:border-[#d6a496] hover:text-[var(--lq-signal-deep)]"><ListChecks className="h-3.5 w-3.5" /> Manage questions</button>
-          <button type="button" onClick={() => navigate("/host/session/harbor-47")} className="lq-focus inline-flex items-center gap-1.5 rounded-lg bg-[var(--lq-signal)] px-2.5 py-2 text-xs font-bold text-white hover:bg-[var(--lq-signal-deep)]"><Play className="h-3.5 w-3.5" /> Create session</button>
+           <button type="button" onClick={() => navigate("/host/session/new")} className="lq-focus inline-flex items-center gap-1.5 rounded-lg bg-[var(--lq-signal)] px-2.5 py-2 text-xs font-bold text-white hover:bg-[var(--lq-signal-deep)]"><Play className="h-3.5 w-3.5" /> Create session</button>
           <button type="button" onClick={onDelete} className="lq-focus rounded-lg p-2 text-[#ad5c57] hover:bg-[#fff0f0]" aria-label={`Delete ${template.title}`}><Trash2 className="h-4 w-4" /></button>
         </div>
       </div>
@@ -511,7 +546,7 @@ function QuestionManagementPage({
           <button type="button" onClick={() => navigate("/host/templates/harbor-house")} className="lq-focus inline-flex items-center gap-1.5 text-xs font-bold text-[var(--lq-ink-soft)] hover:text-[var(--lq-signal-deep)]"><ArrowLeft className="h-3.5 w-3.5" /> Template</button>
           <button type="button" onClick={() => navigate("/host/dashboard")} className="lq-focus inline-flex items-center gap-1.5 text-xs font-bold text-[var(--lq-ink-soft)] hover:text-[var(--lq-signal-deep)]"><LayoutDashboard className="h-3.5 w-3.5" /> Dashboard</button>
         </div>
-        <Button tone="signal" icon={Play} onClick={() => navigate("/host/session/harbor-47")}>Create session</Button>
+         <Button tone="signal" icon={Play} onClick={() => navigate("/host/session/new")}>Create session</Button>
       </div>
     </div>
   );
@@ -650,8 +685,324 @@ function QuestionEditorPage({
   );
 }
 
+function CreateSessionPage({
+  templates,
+  selectedTemplate,
+  navigate,
+  onCreateSession,
+}: {
+  templates: Template[];
+  selectedTemplate?: Template;
+  navigate: (route: string) => void;
+  onCreateSession: (settings: SessionSettings) => void;
+}) {
+  const [templateId, setTemplateId] = useState(selectedTemplate?.id ?? templates[0]?.id ?? "");
+  const [requireApproval, setRequireApproval] = useState(true);
+  const [maximumParticipants, setMaximumParticipants] = useState("");
+  const template = templates.find((item) => item.id === templateId) ?? selectedTemplate ?? templates[0];
+
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!template) return;
+    onCreateSession({ templateId: template.id, requireApproval, maximumParticipants: maximumParticipants.trim() });
+  };
+
+  return (
+    <div className="mx-auto max-w-[1180px] px-5 py-7 sm:px-8 lg:px-10">
+      <Breadcrumbs items={[{ label: "Host console" }, { label: "Current session" }, { label: "Create session" }]} />
+      <div className="mt-5 flex items-center justify-between gap-3">
+        <BackButton onClick={() => navigate("/host/templates")} />
+        <RouteHint route="/host/session/new" />
+      </div>
+      <PageHeader
+        eyebrow="New live room"
+        title="Make a room for the set."
+        description="Choose what you want to play, set the two guardrails that matter, and open a lobby when the room is ready."
+      >
+        <StatusBadge tone="ready" icon={CheckCircle2}>Local preview</StatusBadge>
+      </PageHeader>
+
+      <form onSubmit={submit} className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <section className="lq-card rounded-3xl p-5 sm:p-7">
+          <div className="flex items-start gap-3 border-b border-[var(--lq-line)] pb-5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[var(--lq-signal)] text-white"><Radio className="h-5 w-5" /></div>
+            <div>
+              <h2 className="text-sm font-bold">Choose a quiz template</h2>
+              <p className="mt-1 text-xs leading-5 text-[var(--lq-ink-soft)]">The host can still review the room before the first question lands.</p>
+            </div>
+          </div>
+
+          {templates.length === 0 ? (
+            <EmptyState
+              title="No quiz sets to play"
+              description="Create a template first, then come back to make a live room."
+              action={<Button tone="quiet" onClick={() => navigate("/host/templates/new")}>Create a template</Button>}
+            />
+          ) : (
+            <>
+              <label className="mt-6 block text-xs font-bold text-[var(--lq-ink)]">
+                Quiz template
+                <select
+                  value={templateId}
+                  onChange={(event) => setTemplateId(event.target.value)}
+                  className="lq-focus mt-2 w-full appearance-none rounded-xl border border-[var(--lq-line)] bg-[#fbfaf7] px-3.5 py-3 text-sm font-semibold text-[var(--lq-ink)] outline-none transition-colors focus:border-[#d98a76] focus:bg-[var(--lq-card)]"
+                >
+                  {templates.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+                </select>
+              </label>
+
+              {template && (
+                <div className="mt-4 rounded-2xl border border-[#ead28d] bg-[#fff8df] p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="lq-mono text-[9px] font-bold uppercase tracking-[0.18em] text-[#8a7228]">Selected set</div>
+                      <h3 className="lq-display mt-2 text-2xl font-extrabold text-[var(--lq-ink)]">{template.title}</h3>
+                    </div>
+                    <span className="lq-mono rounded-lg bg-[#f4d98e] px-2 py-1 text-[10px] font-bold text-[#725b1f]">{template.questionCount} Qs</span>
+                  </div>
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-[#71633a]">{template.description}</p>
+                  <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[11px] font-bold text-[#806a27]">
+                    <span className="inline-flex items-center gap-1.5"><ListChecks className="h-3.5 w-3.5" /> {template.questionCount} questions</span>
+                    <span>{template.updated}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-7 border-t border-[var(--lq-line)] pt-6">
+                <div className="mb-4">
+                  <h2 className="text-sm font-bold">Room guardrails</h2>
+                  <p className="mt-1 text-xs leading-5 text-[var(--lq-ink-soft)]">Optional settings for this room only. You can change the lobby lock later.</p>
+                </div>
+                <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[var(--lq-line)] bg-[#fbfaf7] p-4 transition-colors hover:border-[#d6a496]">
+                  <input type="checkbox" checked={requireApproval} onChange={(event) => setRequireApproval(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#ed6d4d]" />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-bold">Require Participant Approval</span>
+                    <span className="mt-1 block text-xs leading-5 text-[var(--lq-ink-soft)]">New arrivals wait in the lobby until you let them in.</span>
+                  </span>
+                </label>
+                <label className="mt-3 block text-xs font-bold">
+                  <span className="flex items-center justify-between gap-2"><span>Maximum Participants</span><span className="font-medium text-[var(--lq-ink-soft)]">Optional</span></span>
+                  <input
+                    type="number"
+                    min="2"
+                    max="200"
+                    value={maximumParticipants}
+                    onChange={(event) => setMaximumParticipants(event.target.value)}
+                    placeholder="Leave open"
+                    className="lq-focus mt-2 w-full rounded-xl border border-[var(--lq-line)] bg-[#fbfaf7] px-3.5 py-3 text-sm text-[var(--lq-ink)] outline-none transition-colors placeholder:text-[#9a9eaa] focus:border-[#d98a76] focus:bg-[var(--lq-card)]"
+                  />
+                </label>
+              </div>
+
+              <div className="mt-7 flex flex-wrap gap-2 border-t border-[var(--lq-line)] pt-5">
+                <Button type="submit" tone="signal" icon={Play}>Create Session</Button>
+                <Button tone="quiet" icon={X} onClick={() => navigate("/host/templates")}>Cancel</Button>
+              </div>
+            </>
+          )}
+        </section>
+
+        <aside className="space-y-4">
+          <div className="rounded-3xl bg-[var(--lq-ink)] p-5 text-[var(--lq-paper)] sm:p-6">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[rgba(244,203,104,0.16)] text-[var(--lq-sun)]"><Users className="h-5 w-5" /></div>
+            <h2 className="lq-display mt-5 text-2xl font-extrabold">A room before a crowd.</h2>
+            <p className="mt-2 text-sm leading-6 text-[#b9c4d1]">Create the room first. Then share the code, welcome people in, and start when the energy feels right.</p>
+            <div className="mt-5 border-t border-[#34435a] pt-4">
+              <div className="lq-mono text-[9px] font-bold uppercase tracking-[0.18em] text-[#9eacbd]">Next</div>
+              <div className="mt-2 flex items-center gap-2 text-sm font-bold"><span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[var(--lq-sun)] text-[var(--lq-ink)]">2</span> Open the host lobby</div>
+            </div>
+          </div>
+          <div className="lq-card rounded-3xl p-5 sm:p-6">
+            <div className="flex items-center gap-2 text-[var(--lq-ink-soft)]"><ClipboardList className="h-4 w-4" /><span className="text-xs font-bold">Session summary</span></div>
+            <dl className="mt-4 space-y-3 text-xs">
+              <div className="flex items-start justify-between gap-4"><dt className="text-[var(--lq-ink-soft)]">Template</dt><dd className="text-right font-bold">{template?.title ?? "None selected"}</dd></div>
+              <div className="flex items-start justify-between gap-4"><dt className="text-[var(--lq-ink-soft)]">Questions</dt><dd className="font-bold">{template?.questionCount ?? 0}</dd></div>
+              <div className="flex items-start justify-between gap-4"><dt className="text-[var(--lq-ink-soft)]">Approval</dt><dd className="font-bold">{requireApproval ? "Required" : "Open entry"}</dd></div>
+            </dl>
+          </div>
+        </aside>
+      </form>
+    </div>
+  );
+}
+
+function DemoQrCode() {
+  const pattern = [
+    "11111110010",
+    "10000010111",
+    "10111010001",
+    "10111010101",
+    "10111010011",
+    "10000010100",
+    "11111110101",
+    "00101101011",
+    "11010011100",
+    "01110100101",
+    "10101111011",
+  ];
+  return (
+    <div className="rounded-2xl border border-[var(--lq-line)] bg-[#fbfaf7] p-4" aria-label="Demo QR code for the participant join link">
+      <div className="mx-auto grid aspect-square w-full max-w-[174px] grid-cols-11 gap-[3px] rounded-lg bg-[var(--lq-card)] p-2">
+        {pattern.flatMap((row, rowIndex) => [...row].map((cell, cellIndex) => (
+          <span key={`${rowIndex}-${cellIndex}`} className={cell === "1" ? "rounded-[2px] bg-[var(--lq-ink)]" : "rounded-[2px] bg-transparent"} />
+        )))}
+      </div>
+      <div className="mt-3 text-center text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--lq-ink-soft)]">Scan to join · demo only</div>
+    </div>
+  );
+}
+
+function participantTone(status: ParticipantStatus) {
+  if (status === "Pending") return "warning" as const;
+  if (status === "Rejected") return "danger" as const;
+  if (status === "Approved" || status === "Connected") return "ready" as const;
+  return "neutral" as const;
+}
+
+function HostSessionLobbyPage({
+  template,
+  settings,
+  participants,
+  lobbyLocked,
+  quizStarted,
+  navigate,
+  onApproveParticipant,
+  onRejectParticipant,
+  onRemoveParticipant,
+  onLockLobby,
+  onUnlockLobby,
+  onStartQuiz,
+  onCopy,
+}: {
+  template?: Template;
+  settings: SessionSettings;
+  participants: Participant[];
+  lobbyLocked: boolean;
+  quizStarted: boolean;
+  navigate: (route: string) => void;
+  onApproveParticipant: (id: string) => void;
+  onRejectParticipant: (id: string) => void;
+  onRemoveParticipant: (id: string) => void;
+  onLockLobby: () => void;
+  onUnlockLobby: () => void;
+  onStartQuiz: () => void;
+  onCopy: (message: string) => void;
+}) {
+  const activeParticipants = participants.filter((participant) => participant.status !== "Removed" && participant.status !== "Rejected");
+  const joinLink = "signalhouse.local/join/HARBOR-47";
+  const approvalLabel = settings.requireApproval ? "Approval required" : "Open entry";
+  const statusLabel = quizStarted ? "Quiz live" : lobbyLocked ? "Lobby locked" : "Lobby open";
+
+  return (
+    <div className="mx-auto max-w-[1360px] px-5 py-7 sm:px-8 lg:px-10">
+      <Breadcrumbs items={[{ label: "Host console" }, { label: "Current session" }]} />
+      <div className="mt-5 flex items-center justify-between gap-3">
+        <BackButton onClick={() => navigate("/host/templates")} />
+        <RouteHint route="/host/session/harbor-47" />
+      </div>
+      <div className="lq-rise mt-5 flex flex-col gap-5 border-b border-[var(--lq-line)] pb-6 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <div className="lq-mono mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--lq-signal-deep)]">Host session · Harbor 47</div>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="lq-display text-3xl font-extrabold tracking-tight text-[var(--lq-ink)] sm:text-4xl">{template?.title ?? "Harbor House Quiz"}</h1>
+            <StatusBadge tone={quizStarted ? "live" : lobbyLocked ? "warning" : "ready"}>{statusLabel}</StatusBadge>
+          </div>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--lq-ink-soft)]">The room is staged. Share the code, keep an eye on arrivals, and start when your people are in.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {!lobbyLocked ? (
+            <Button tone="quiet" icon={LockKeyhole} onClick={onLockLobby} disabled={quizStarted}>Lock Lobby</Button>
+          ) : (
+            <Button tone="quiet" icon={UnlockKeyhole} onClick={onUnlockLobby} disabled={quizStarted}>Unlock Lobby</Button>
+          )}
+          <Button tone="signal" icon={Play} onClick={onStartQuiz} disabled={quizStarted}>Start Quiz</Button>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_310px]">
+        <div className="space-y-5">
+          <section className="lq-card overflow-hidden rounded-3xl" aria-labelledby="session-code-heading">
+            <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
+              <div className="bg-[var(--lq-ink)] p-6 text-[var(--lq-paper)] sm:p-8">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="lq-mono text-[9px] font-bold uppercase tracking-[0.2em] text-[#9eacbd]">Share this room</div>
+                  <StatusBadge tone={quizStarted ? "live" : "ready"}>{quizStarted ? "In progress" : "Waiting for players"}</StatusBadge>
+                </div>
+                <h2 id="session-code-heading" className="lq-display mt-8 text-lg font-bold text-[#dbe3ec]">Session code</h2>
+                <div className="lq-mono mt-2 whitespace-nowrap text-4xl font-bold tracking-[0.1em] text-[var(--lq-sun)] sm:text-5xl">HARBOR-47</div>
+                <p className="mt-4 max-w-md text-sm leading-6 text-[#b9c4d1]">An intentionally fixed demo code for this preview. Nothing is generated or connected behind the scenes.</p>
+                <Button tone="signal" icon={Copy} onClick={() => onCopy("Session code copied locally.")}>Copy Code</Button>
+              </div>
+              <div className="bg-[#fff8df] p-6 sm:p-8">
+                <div className="flex items-center gap-2 text-[#806a27]"><Link2 className="h-4 w-4" /><span className="text-xs font-bold">Participant join link</span></div>
+                <div className="mt-4 break-all rounded-xl border border-[#ead28d] bg-[#fffdf3] px-3 py-3 text-xs font-bold leading-5 text-[#725b1f]">{joinLink}</div>
+                <Button tone="quiet" icon={Copy} onClick={() => onCopy("Join link copied locally.")}>Copy Join Link</Button>
+              </div>
+            </div>
+          </section>
+
+          <section className="lq-card rounded-3xl p-5 sm:p-6" aria-labelledby="participant-list-heading">
+            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[var(--lq-line)] pb-4">
+              <div>
+                <div className="flex items-center gap-2"><Users className="h-4 w-4 text-[var(--lq-signal-deep)]" /><p className="text-sm font-semibold text-[var(--lq-ink-soft)]">People in the room</p></div>
+                <h2 id="participant-list-heading" className="lq-display mt-1 text-2xl font-extrabold">{activeParticipants.length} participant{activeParticipants.length === 1 ? "" : "s"} active</h2>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <StatusBadge tone={lobbyLocked ? "warning" : "ready"} icon={lobbyLocked ? LockKeyhole : UnlockKeyhole}>{lobbyLocked ? "Lobby locked" : "Lobby open"}</StatusBadge>
+                <StatusBadge tone={settings.requireApproval ? "warning" : "ready"}>{approvalLabel}</StatusBadge>
+              </div>
+            </div>
+            <div className="mt-4 space-y-2.5">
+              {participants.map((participant) => (
+                <div key={participant.id} className="flex flex-col gap-3 rounded-2xl border border-[var(--lq-line)] bg-[#fbfaf7] p-3.5 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-bold ${participant.status === "Rejected" || participant.status === "Removed" ? "bg-[#f0ede7] text-[#89909a]" : "bg-[#f1eef9] text-[#665b86]"}`}>{participant.initials}</div>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2"><span className={`truncate text-sm font-bold ${participant.status === "Removed" ? "text-[var(--lq-ink-soft)] line-through" : "text-[var(--lq-ink)]"}`}>{participant.name}</span><StatusBadge tone={participantTone(participant.status)}>{participant.status}</StatusBadge></div>
+                      <div className="mt-1 text-[11px] font-semibold text-[var(--lq-ink-soft)]">Joined {participant.joined}</div>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 flex-wrap items-center gap-1.5 sm:justify-end">
+                    {participant.status === "Pending" && (
+                      <>
+                        <button type="button" onClick={() => onApproveParticipant(participant.id)} className="lq-focus inline-flex items-center gap-1.5 rounded-lg bg-[#edf9f4] px-2.5 py-2 text-xs font-bold text-[#2e7168] hover:bg-[#dff2ea]"><UserCheck className="h-3.5 w-3.5" /> Approve</button>
+                        <button type="button" onClick={() => onRejectParticipant(participant.id)} className="lq-focus inline-flex items-center gap-1.5 rounded-lg bg-[#fff0f0] px-2.5 py-2 text-xs font-bold text-[#ad4447] hover:bg-[#fbe1e1]"><UserX className="h-3.5 w-3.5" /> Reject</button>
+                      </>
+                    )}
+                    {(participant.status === "Approved" || participant.status === "Connected" || participant.status === "Disconnected") && (
+                      <button type="button" onClick={() => onRemoveParticipant(participant.id)} className="lq-focus inline-flex items-center gap-1.5 rounded-lg border border-[var(--lq-line)] bg-[var(--lq-card)] px-2.5 py-2 text-xs font-bold text-[var(--lq-ink-soft)] hover:border-[#d6a496] hover:text-[#ad4447]"><UserX className="h-3.5 w-3.5" /> Remove</button>
+                    )}
+                    {participant.status === "Disconnected" && <WifiOff className="ml-1 h-4 w-4 text-[#9a7d29]" aria-label="Disconnected" />}
+                    {participant.status === "Connected" && <CheckCircle2 className="ml-1 h-4 w-4 text-[var(--lq-mint-deep)]" aria-label="Connected" />}
+                    {(participant.status === "Rejected" || participant.status === "Removed") && <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#9298a1]">No access</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <aside className="space-y-5">
+          <section className="lq-card rounded-3xl p-5 sm:p-6" aria-labelledby="qr-heading">
+            <div className="flex items-center justify-between gap-3">
+              <div><div className="flex items-center gap-2"><QrCode className="h-4 w-4 text-[var(--lq-signal-deep)]" /><h2 id="qr-heading" className="text-sm font-bold">Quick join</h2></div><p className="mt-1 text-xs leading-5 text-[var(--lq-ink-soft)]">A visual placeholder for the room QR.</p></div>
+              <StatusBadge tone="neutral">Demo</StatusBadge>
+            </div>
+            <div className="mt-4"><DemoQrCode /></div>
+          </section>
+          <section className="rounded-3xl bg-[#edf8f4] p-5 sm:p-6">
+            <div className="flex items-center gap-2 text-[#397f75]"><UserRound className="h-4 w-4" /><span className="text-xs font-bold">Room notes</span></div>
+            <h2 className="lq-display mt-4 text-xl font-extrabold text-[var(--lq-ink)]">Keep the welcome warm.</h2>
+            <p className="mt-2 text-xs leading-5 text-[#4d746d]">Approval is {settings.requireApproval ? "on" : "off"} for this preview. {settings.maximumParticipants ? `The room is capped at ${settings.maximumParticipants} people.` : "There is no participant cap."}</p>
+            <button type="button" onClick={() => navigate("/host/session/new")} className="lq-focus mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-[#2e7168] hover:underline">Adjust session setup <ArrowRight className="h-3.5 w-3.5" /></button>
+          </section>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
 function HandoffPage({ route, navigate }: { route: string; navigate: (route: string) => void }) {
-  const session = route.startsWith("/host/session");
   const signedOut = route === "/signed-out";
   if (signedOut) {
     return (
@@ -666,22 +1017,22 @@ function HandoffPage({ route, navigate }: { route: string; navigate: (route: str
       </div>
     );
   }
-  const title = session ? "Set the room in motion." : route.startsWith("/host/results") ? "A room worth remembering." : "Your room, at a glance.";
-  const description = session ? "The current session handoff stays visible in the host shell while this workspace focuses on templates and question authoring." : route.startsWith("/host/results") ? "Results remain one click away after a room has finished." : "The dashboard is the calm starting point for the host workflow.";
+  const title = route.startsWith("/host/results") ? "A room worth remembering." : "Your room, at a glance.";
+  const description = route.startsWith("/host/results") ? "Results remain one click away after a room has finished." : "The dashboard is the calm starting point for the host workflow.";
   return (
     <div className="mx-auto max-w-[1100px] px-5 py-7 sm:px-8 lg:px-10">
-      <Breadcrumbs items={[{ label: "Host console", onClick: () => navigate("/host/templates") }, { label: session ? "Current session" : route.startsWith("/host/results") ? "Results" : "Dashboard" }]} />
+      <Breadcrumbs items={[{ label: "Host console", onClick: () => navigate("/host/templates") }, { label: route.startsWith("/host/results") ? "Results" : "Dashboard" }]} />
       <div className="mt-5 flex items-center justify-between gap-3"><BackButton onClick={() => navigate("/host/templates")} /><RouteHint route={route} /></div>
-      <PageHeader eyebrow={session ? "Current session" : route.startsWith("/host/results") ? "Results" : "Dashboard"} title={title} description={description}>
+      <PageHeader eyebrow={route.startsWith("/host/results") ? "Results" : "Dashboard"} title={title} description={description}>
         <Button tone="quiet" onClick={() => navigate("/host/templates")}>Back to templates</Button>
       </PageHeader>
       <div className="lq-card relative overflow-hidden rounded-3xl p-7 sm:p-10">
         <div className="absolute right-0 top-0 h-52 w-52 rounded-bl-full bg-[#edf8f4]" />
         <div className="relative max-w-xl">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--lq-ink)] text-[var(--lq-sun)]">{session ? <Radio className="h-6 w-6" /> : route.startsWith("/host/results") ? <BarChart3 className="h-6 w-6" /> : <LayoutDashboard className="h-6 w-6" />}</div>
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--lq-ink)] text-[var(--lq-sun)]">{route.startsWith("/host/results") ? <BarChart3 className="h-6 w-6" /> : <LayoutDashboard className="h-6 w-6" />}</div>
           <h2 className="lq-display mt-7 text-2xl font-extrabold">The template shelf is ready for the next handoff.</h2>
           <p className="mt-3 text-sm leading-6 text-[var(--lq-ink-soft)]">This local preview keeps the surrounding host navigation intact without implying live-session behavior, networking, or a scoring engine.</p>
-          <div className="mt-7 flex flex-wrap items-center gap-3"><StatusBadge tone={session ? "live" : "neutral"}>{session ? "Room handoff" : "Workspace handoff"}</StatusBadge><Button tone="signal" icon={BookOpen} onClick={() => navigate("/host/templates")}>Open quiz templates</Button></div>
+           <div className="mt-7 flex flex-wrap items-center gap-3"><StatusBadge tone="neutral">Workspace handoff</StatusBadge><Button tone="signal" icon={BookOpen} onClick={() => navigate("/host/templates")}>Open quiz templates</Button></div>
         </div>
       </div>
     </div>
@@ -695,6 +1046,14 @@ export function TemplateWorkspace() {
   const [emptyShelf, setEmptyShelf] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ kind: "template" | "question"; value: Template | Question } | null>(null);
+  const [sessionSettings, setSessionSettings] = useState<SessionSettings>({
+    templateId: "harbor-house",
+    requireApproval: true,
+    maximumParticipants: "",
+  });
+  const [participants, setParticipants] = useState<Participant[]>(initialParticipants);
+  const [lobbyLocked, setLobbyLocked] = useState(false);
+  const [quizStarted, setQuizStarted] = useState(false);
 
   const showNotice = (message: string) => {
     setNotice(message);
@@ -725,8 +1084,42 @@ export function TemplateWorkspace() {
     setQuestions((current) => current.filter((question) => question.id !== id));
     showNotice("Question removed from the local sequence.");
   };
+  const onCreateSession = (settings: SessionSettings) => {
+    setSessionSettings(settings);
+    setParticipants(initialParticipants);
+    setLobbyLocked(false);
+    setQuizStarted(false);
+    showNotice("Session created locally. The host lobby is ready.");
+    navigate("/host/session/harbor-47");
+  };
+  const onApproveParticipant = (id: string) => {
+    setParticipants((current) => current.map((participant) => participant.id === id ? { ...participant, status: "Approved" } : participant));
+    showNotice("Participant approved locally.");
+  };
+  const onRejectParticipant = (id: string) => {
+    setParticipants((current) => current.map((participant) => participant.id === id ? { ...participant, status: "Rejected" } : participant));
+    showNotice("Participant rejected locally.");
+  };
+  const onRemoveParticipant = (id: string) => {
+    setParticipants((current) => current.map((participant) => participant.id === id ? { ...participant, status: "Removed" } : participant));
+    showNotice("Participant removed locally.");
+  };
+  const onLockLobby = () => {
+    setLobbyLocked(true);
+    showNotice("Lobby locked locally.");
+  };
+  const onUnlockLobby = () => {
+    setLobbyLocked(false);
+    showNotice("Lobby unlocked locally.");
+  };
+  const onStartQuiz = () => {
+    setQuizStarted(true);
+    setLobbyLocked(true);
+    showNotice("Quiz started in the local preview.");
+  };
 
   const selectedTemplate = useMemo(() => templates.find((template) => template.id === "harbor-house") ?? templates[0], [templates]);
+  const sessionTemplate = useMemo(() => templates.find((template) => template.id === sessionSettings.templateId) ?? selectedTemplate, [sessionSettings.templateId, selectedTemplate, templates]);
   const editingQuestionId = route.match(/\/questions\/(\d+)\/edit$/)?.[1];
   const editingQuestion = editingQuestionId ? questions.find((question) => question.id === Number(editingQuestionId)) : undefined;
   const isTemplatesSection = route.startsWith("/host/templates");
@@ -743,6 +1136,24 @@ export function TemplateWorkspace() {
       <QuestionManagementPage questions={questions} navigate={navigate} onDelete={(question) => setDeleteTarget({ kind: "question", value: question })} />
     ) : route === "/host/templates/harbor-house/questions/new" ? (
       <QuestionEditorPage key={route} isNew navigate={navigate} onCreate={onCreateQuestion} onUpdate={onUpdateQuestion} />
+     ) : route === "/host/session/new" ? (
+       <CreateSessionPage templates={templates} selectedTemplate={selectedTemplate} navigate={navigate} onCreateSession={onCreateSession} />
+     ) : route === "/host/session/harbor-47" ? (
+       <HostSessionLobbyPage
+         template={sessionTemplate}
+         settings={sessionSettings}
+         participants={participants}
+         lobbyLocked={lobbyLocked}
+         quizStarted={quizStarted}
+         navigate={navigate}
+         onApproveParticipant={onApproveParticipant}
+         onRejectParticipant={onRejectParticipant}
+         onRemoveParticipant={onRemoveParticipant}
+         onLockLobby={onLockLobby}
+         onUnlockLobby={onUnlockLobby}
+         onStartQuiz={onStartQuiz}
+         onCopy={showNotice}
+       />
     ) : editingQuestionId ? (
       <QuestionEditorPage key={route} question={editingQuestion} isNew={false} navigate={navigate} onCreate={onCreateQuestion} onUpdate={onUpdateQuestion} />
     ) : (
