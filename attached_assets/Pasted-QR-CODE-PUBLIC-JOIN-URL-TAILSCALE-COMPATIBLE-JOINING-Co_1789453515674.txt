@@ -1,0 +1,98 @@
+QR CODE + PUBLIC JOIN URL + TAILSCALE-COMPATIBLE JOINING
+
+Continue the SAME project.
+
+Preserve all previously completed screens, components, design language, Host Lobby, routes, and navigation.
+
+Do NOT redesign earlier work.
+
+This remains UI-only.
+
+Do not implement backend infrastructure.
+
+PRODUCTION CONTEXT:
+
+The real deployed application is currently exposed through a public HTTPS Tailscale Funnel hostname.
+
+However, the frontend MUST NOT hardcode a particular *.ts.net hostname.
+
+The production UI must ultimately work with the ACTUAL public HTTPS origin available at runtime or with a complete join URL supplied by the existing application.
+
+For this stage, complete the Host Lobby's Join Link and QR experience.
+
+Create a reusable component:
+
+SessionQRCode
+
+Conceptually:
+
+SessionQRCode({ url })
+
+The QR must represent the COMPLETE PUBLIC PARTICIPANT JOIN URL.
+
+Conceptual production URL:
+
+https://<runtime-public-origin>/participant?session=<SERVER-GENERATED-CODE>
+
+Do NOT hardcode this hostname structure into business logic.
+
+Production may later provide the URL using one of:
+
+session.joinUrl
+deployment configuration
+window.location.origin
+another explicit adapter
+
+The UI should simply accept or derive the final public URL through a clean interface.
+
+HOST LOBBY MUST DISPLAY:
+
+Session Code
+Copy Code
+Join URL
+Copy Join URL
+QR Code
+
+EXPECTED REAL-WORLD FLOW:
+
+Host creates Session
+→ backend supplies Session Code
+→ UI receives Code
+→ public Participant URL is supplied or derived
+→ QR represents full public URL
+→ Host displays/projects QR
+→ Participant scans with phone camera
+→ public HTTPS site opens
+→ Participant Join page opens
+→ Session Code is automatically populated
+
+The participant should NOT need to manually type the Session Code after scanning a valid QR.
+
+Manual entry must still remain possible.
+
+SECURITY:
+
+The QR must NOT contain:
+
+Host credentials
+Host authentication tokens
+infrastructure secrets
+Tailscale credentials
+private Tailscale IP addresses
+localhost
+Docker/internal addresses
+database details
+
+Scanning the QR must NOT bypass:
+
+backend session validation
+participant approval
+lobby lock
+capacity limits
+authorization
+
+Do not use an external QR-generation web service.
+
+If a frontend QR package is used for preview, isolate it behind the SessionQRCode component so it can later be replaced.
+
+STOP after completing this stage.

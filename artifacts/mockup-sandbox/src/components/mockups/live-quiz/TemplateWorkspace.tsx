@@ -1,5 +1,6 @@
 import "./_group.css";
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -72,6 +73,11 @@ type SessionSettings = {
   maximumParticipants: string;
 };
 
+type SessionPreview = {
+  sessionCode: string;
+  joinUrl: string;
+};
+
 type ParticipantStatus = "Pending" | "Approved" | "Connected" | "Disconnected" | "Rejected" | "Removed";
 
 type Participant = {
@@ -90,6 +96,11 @@ const initialParticipants: Participant[] = [
   { id: "jules", name: "Jules Hart", initials: "JH", joined: "5 min ago", status: "Rejected" },
   { id: "noah", name: "Noah Williams", initials: "NW", joined: "6 min ago", status: "Removed" },
 ];
+
+const demoSession: SessionPreview = {
+  sessionCode: "HARBOR-47",
+  joinUrl: "https://play.signalhouse.example/participant?session=HARBOR-47",
+};
 
 const initialTemplates: Template[] = [
   {
@@ -826,28 +837,21 @@ function CreateSessionPage({
   );
 }
 
-function DemoQrCode() {
-  const pattern = [
-    "11111110010",
-    "10000010111",
-    "10111010001",
-    "10111010101",
-    "10111010011",
-    "10000010100",
-    "11111110101",
-    "00101101011",
-    "11010011100",
-    "01110100101",
-    "10101111011",
-  ];
+function SessionQRCode({ url }: { url: string }) {
   return (
-    <div className="rounded-2xl border border-[var(--lq-line)] bg-[#fbfaf7] p-4" aria-label="Demo QR code for the participant join link">
-      <div className="mx-auto grid aspect-square w-full max-w-[174px] grid-cols-11 gap-[3px] rounded-lg bg-[var(--lq-card)] p-2">
-        {pattern.flatMap((row, rowIndex) => [...row].map((cell, cellIndex) => (
-          <span key={`${rowIndex}-${cellIndex}`} className={cell === "1" ? "rounded-[2px] bg-[var(--lq-ink)]" : "rounded-[2px] bg-transparent"} />
-        )))}
+    <div className="rounded-2xl border border-[var(--lq-line)] bg-[#fbfaf7] p-4">
+      <div className="mx-auto flex aspect-square w-full max-w-[204px] items-center justify-center rounded-lg bg-white p-3" aria-label={`QR code for ${url}`}>
+        <QRCodeSVG
+          value={url}
+          size={180}
+          level="M"
+          includeMargin
+          bgColor="#ffffff"
+          fgColor="#15243d"
+          className="h-full w-full"
+        />
       </div>
-      <div className="mt-3 text-center text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--lq-ink-soft)]">Scan to join · demo only</div>
+      <div className="mt-3 text-center text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--lq-ink-soft)]">Scan to join</div>
     </div>
   );
 }
@@ -862,6 +866,8 @@ function participantTone(status: ParticipantStatus) {
 function HostSessionLobbyPage({
   template,
   settings,
+  sessionCode,
+  joinUrl,
   participants,
   lobbyLocked,
   quizStarted,
@@ -876,6 +882,8 @@ function HostSessionLobbyPage({
 }: {
   template?: Template;
   settings: SessionSettings;
+  sessionCode: string;
+  joinUrl: string;
   participants: Participant[];
   lobbyLocked: boolean;
   quizStarted: boolean;
@@ -889,7 +897,6 @@ function HostSessionLobbyPage({
   onCopy: (message: string) => void;
 }) {
   const activeParticipants = participants.filter((participant) => participant.status !== "Removed" && participant.status !== "Rejected");
-  const joinLink = "signalhouse.local/join/HARBOR-47";
   const approvalLabel = settings.requireApproval ? "Approval required" : "Open entry";
   const statusLabel = quizStarted ? "Quiz live" : lobbyLocked ? "Lobby locked" : "Lobby open";
 
@@ -929,14 +936,14 @@ function HostSessionLobbyPage({
                   <StatusBadge tone={quizStarted ? "live" : "ready"}>{quizStarted ? "In progress" : "Waiting for players"}</StatusBadge>
                 </div>
                 <h2 id="session-code-heading" className="lq-display mt-8 text-lg font-bold text-[#dbe3ec]">Session code</h2>
-                <div className="lq-mono mt-2 whitespace-nowrap text-4xl font-bold tracking-[0.1em] text-[var(--lq-sun)] sm:text-5xl">HARBOR-47</div>
+                <div className="lq-mono mt-2 whitespace-nowrap text-4xl font-bold tracking-[0.1em] text-[var(--lq-sun)] sm:text-5xl">{sessionCode}</div>
                 <p className="mt-4 max-w-md text-sm leading-6 text-[#b9c4d1]">An intentionally fixed demo code for this preview. Nothing is generated or connected behind the scenes.</p>
                 <Button tone="signal" icon={Copy} onClick={() => onCopy("Session code copied locally.")}>Copy Code</Button>
               </div>
               <div className="bg-[#fff8df] p-6 sm:p-8">
                 <div className="flex items-center gap-2 text-[#806a27]"><Link2 className="h-4 w-4" /><span className="text-xs font-bold">Participant join link</span></div>
-                <div className="mt-4 break-all rounded-xl border border-[#ead28d] bg-[#fffdf3] px-3 py-3 text-xs font-bold leading-5 text-[#725b1f]">{joinLink}</div>
-                <Button tone="quiet" icon={Copy} onClick={() => onCopy("Join link copied locally.")}>Copy Join Link</Button>
+                <div className="mt-4 break-all rounded-xl border border-[#ead28d] bg-[#fffdf3] px-3 py-3 text-xs font-bold leading-5 text-[#725b1f]">{joinUrl}</div>
+                <Button tone="quiet" icon={Copy} onClick={() => onCopy("Join URL copied locally.")}>Copy Join Link</Button>
               </div>
             </div>
           </section>
@@ -985,10 +992,10 @@ function HostSessionLobbyPage({
         <aside className="space-y-5">
           <section className="lq-card rounded-3xl p-5 sm:p-6" aria-labelledby="qr-heading">
             <div className="flex items-center justify-between gap-3">
-              <div><div className="flex items-center gap-2"><QrCode className="h-4 w-4 text-[var(--lq-signal-deep)]" /><h2 id="qr-heading" className="text-sm font-bold">Quick join</h2></div><p className="mt-1 text-xs leading-5 text-[var(--lq-ink-soft)]">A visual placeholder for the room QR.</p></div>
-              <StatusBadge tone="neutral">Demo</StatusBadge>
+              <div><div className="flex items-center gap-2"><QrCode className="h-4 w-4 text-[var(--lq-signal-deep)]" /><h2 id="qr-heading" className="text-sm font-bold">Quick join</h2></div><p className="mt-1 text-xs leading-5 text-[var(--lq-ink-soft)]">This QR encodes the complete participant URL.</p></div>
+              <StatusBadge tone="neutral">Preview URL</StatusBadge>
             </div>
-            <div className="mt-4"><DemoQrCode /></div>
+            <div className="mt-4"><SessionQRCode url={joinUrl} /></div>
           </section>
           <section className="rounded-3xl bg-[#edf8f4] p-5 sm:p-6">
             <div className="flex items-center gap-2 text-[#397f75]"><UserRound className="h-4 w-4" /><span className="text-xs font-bold">Room notes</span></div>
@@ -1140,8 +1147,10 @@ export function TemplateWorkspace() {
        <CreateSessionPage templates={templates} selectedTemplate={selectedTemplate} navigate={navigate} onCreateSession={onCreateSession} />
      ) : route === "/host/session/harbor-47" ? (
        <HostSessionLobbyPage
-         template={sessionTemplate}
+          template={sessionTemplate}
          settings={sessionSettings}
+          sessionCode={demoSession.sessionCode}
+          joinUrl={demoSession.joinUrl}
          participants={participants}
          lobbyLocked={lobbyLocked}
          quizStarted={quizStarted}
