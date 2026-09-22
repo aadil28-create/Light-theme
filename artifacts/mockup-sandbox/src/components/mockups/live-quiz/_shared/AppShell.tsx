@@ -2,12 +2,12 @@ import { Bell, Menu, PanelLeftClose } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { BrandMark, ConnectionStatus, RoleSwitcher, cn, type ConnectionState } from "./Primitives";
 
-export function Header({ role, connection = "connected", onMenu }: { role: "host" | "participant"; connection?: ConnectionState; onMenu?: () => void }) {
+export function Header({ role, connection = "connected", onMenu, compactBrand = false }: { role: "host" | "participant"; connection?: ConnectionState; onMenu?: () => void; compactBrand?: boolean }) {
   return (
     <header className="flex min-h-[72px] items-center justify-between gap-4 border-b border-[var(--lq-line)] bg-[rgba(255,253,250,0.88)] px-5 backdrop-blur-md sm:px-7">
       <div className="flex items-center gap-3">
         {onMenu && <button type="button" onClick={onMenu} aria-label="Open navigation" className="lq-focus rounded-xl p-2 text-[var(--lq-ink-soft)] hover:bg-[#f0ede7] md:hidden"><Menu className="h-5 w-5" /></button>}
-        <BrandMark compact={Boolean(onMenu)} />
+        <BrandMark compact={Boolean(onMenu) || compactBrand} />
         {onMenu && <span className="hidden text-xs font-semibold text-[var(--lq-ink-soft)] sm:inline">/ {role === "host" ? "Host console" : "Participant"}</span>}
       </div>
       <div className="flex items-center gap-2.5">
@@ -46,11 +46,11 @@ export function Navigation({ items, activeRoute, onNavigate, mobileOpen = false,
   );
 }
 
-export function AppShell({ children, role, connection, navigation, activeRoute, onNavigate, footer, participant = false }: { children: ReactNode; role: "host" | "participant"; connection?: ConnectionState; navigation?: Array<{ label: string; route: string; icon: ReactNode; meta?: string }>; activeRoute?: string; onNavigate?: (route: string) => void; footer?: ReactNode; participant?: boolean }) {
+export function AppShell({ children, role, connection, navigation, activeRoute, onNavigate, footer, participant = false, compactBrand = false }: { children: ReactNode; role: "host" | "participant"; connection?: ConnectionState; navigation?: Array<{ label: string; route: string; icon: ReactNode; meta?: string }>; activeRoute?: string; onNavigate?: (route: string) => void; footer?: ReactNode; participant?: boolean; compactBrand?: boolean }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   return (
     <div className="live-quiz min-h-[100dvh] bg-[var(--lq-paper)]">
-      <Header role={role} connection={connection} onMenu={navigation ? () => setMobileOpen((open) => !open) : undefined} />
+      <Header role={role} connection={connection} onMenu={navigation ? () => setMobileOpen((open) => !open) : undefined} compactBrand={compactBrand || (participant && !navigation)} />
       <div className={cn("relative flex min-h-[calc(100dvh-72px)]", participant && "justify-center bg-[#e7f0ed]")}>
         {navigation && activeRoute && onNavigate && <Navigation items={navigation} activeRoute={activeRoute} onNavigate={onNavigate} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />}
         <main className={cn("min-w-0 flex-1", participant ? "w-full max-w-[430px] bg-[var(--lq-paper)] shadow-[0_0_40px_rgba(21,36,61,0.08)]" : "")}>{children}</main>
