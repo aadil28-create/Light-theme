@@ -33,6 +33,7 @@ import {
   X,
 } from "lucide-react";
 import { AppShell } from "./_shared/AppShell";
+import { LiveHostQuiz } from "./LiveHostQuiz";
 import {
   BackButton,
   Breadcrumbs,
@@ -1123,10 +1124,30 @@ export function TemplateWorkspace() {
     setQuizStarted(true);
     setLobbyLocked(true);
     showNotice("Quiz started in the local preview.");
+    navigate("/host/session/harbor-47/quiz");
+  };
+  const onPauseQuiz = () => {
+    showNotice("Pause sent to the local preview.");
+  };
+  const onResumeQuiz = () => {
+    showNotice("Resume sent to the local preview.");
+  };
+  const onNextQuestion = () => {
+    showNotice("Next question sent to the local preview.");
+  };
+  const onEndQuiz = () => {
+    showNotice("End quiz sent to the local preview.");
   };
 
   const selectedTemplate = useMemo(() => templates.find((template) => template.id === "harbor-house") ?? templates[0], [templates]);
   const sessionTemplate = useMemo(() => templates.find((template) => template.id === sessionSettings.templateId) ?? selectedTemplate, [sessionSettings.templateId, selectedTemplate, templates]);
+  const liveQuestion = questions[0] ?? initialQuestions[0];
+  const liveLeaderboard = [
+    { rank: 1, name: "Rhea Patel", score: 120, change: "Up 2 places" },
+    { rank: 2, name: "Owen Bell", score: 110, change: "Holding steady" },
+    { rank: 3, name: "Mara Chen", score: 95, change: "Up 1 place" },
+    { rank: 4, name: "Sam Ortega", score: 80, change: "Down 1 place" },
+  ];
   const editingQuestionId = route.match(/\/questions\/(\d+)\/edit$/)?.[1];
   const editingQuestion = editingQuestionId ? questions.find((question) => question.id === Number(editingQuestionId)) : undefined;
   const isTemplatesSection = route.startsWith("/host/templates");
@@ -1145,6 +1166,28 @@ export function TemplateWorkspace() {
       <QuestionEditorPage key={route} isNew navigate={navigate} onCreate={onCreateQuestion} onUpdate={onUpdateQuestion} />
      ) : route === "/host/session/new" ? (
        <CreateSessionPage templates={templates} selectedTemplate={selectedTemplate} navigate={navigate} onCreateSession={onCreateSession} />
+     ) : route === "/host/session/harbor-47/quiz" ? (
+       <LiveHostQuiz
+         quizTitle={sessionTemplate?.title ?? "Harbor House Quiz"}
+         sessionCode={demoSession.sessionCode}
+         totalQuestions={questions.length || 1}
+         currentQuestionNumber={1}
+         currentQuestion={liveQuestion.text}
+         answerOptions={liveQuestion.options}
+         correctAnswerIndex={liveQuestion.correctIndex}
+         remainingMs={liveQuestion.timeAllowed * 1000}
+         timerStatus="running"
+         sessionStatus="live"
+         questionStatus="accepting answers"
+         connectedParticipants={participants.filter((participant) => participant.status === "Connected" || participant.status === "Approved").length}
+         answersReceived={2}
+         leaderboard={liveLeaderboard}
+         navigate={navigate}
+         onPauseQuiz={onPauseQuiz}
+         onResumeQuiz={onResumeQuiz}
+         onNextQuestion={onNextQuestion}
+         onEndQuiz={onEndQuiz}
+       />
      ) : route === "/host/session/harbor-47" ? (
        <HostSessionLobbyPage
           template={sessionTemplate}

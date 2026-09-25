@@ -1,0 +1,1 @@
+- [Component preview URLs](preview-sandbox-path.md) — screenshot component previews through the generated `/preview/<component-path>` route, not the sandbox gallery root.
