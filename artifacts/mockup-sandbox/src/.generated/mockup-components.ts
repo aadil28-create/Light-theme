@@ -6,6 +6,7 @@ export const modules: ModuleMap = {
   "./components/mockups/live-quiz/HostShell.tsx": () => import("../components/mockups/live-quiz/HostShell.tsx"),
   "./components/mockups/live-quiz/LandingPage.tsx": () => import("../components/mockups/live-quiz/LandingPage.tsx"),
   "./components/mockups/live-quiz/LiveHostQuiz.tsx": () => import("../components/mockups/live-quiz/LiveHostQuiz.tsx"),
+  "./components/mockups/live-quiz/LiveParticipantQuiz.tsx": () => import("../components/mockups/live-quiz/LiveParticipantQuiz.tsx"),
   "./components/mockups/live-quiz/ParticipantJoinWorkspace.tsx": () => import("../components/mockups/live-quiz/ParticipantJoinWorkspace.tsx"),
   "./components/mockups/live-quiz/ParticipantShell.tsx": () => import("../components/mockups/live-quiz/ParticipantShell.tsx"),
   "./components/mockups/live-quiz/TemplateWorkspace.tsx": () => import("../components/mockups/live-quiz/TemplateWorkspace.tsx")

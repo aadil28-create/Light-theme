@@ -2,6 +2,7 @@ import "./_group.css";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Check, CircleHelp, LockKeyhole, MessageCircle, ShieldCheck, Signal, UserRound, UsersRound } from "lucide-react";
 import { AppShell } from "./_shared/AppShell";
+import { LiveParticipantQuiz } from "./LiveParticipantQuiz";
 import { ConnectionStatus, EmptyState, ErrorState, StatusBadge, usePreviewRoute, type ConnectionState } from "./_shared/Primitives";
 
 function ParticipantTop({ connection, onChange }: { connection: ConnectionState; onChange: (next: ConnectionState) => void }) {
@@ -26,7 +27,7 @@ export function ParticipantShell() {
   const participantRoute = route === "/participant/session/harbor-47";
   return <AppShell participant role="participant" connection={connection} footer={<div className="mx-auto hidden max-w-[430px] border-t border-[var(--lq-line)] bg-[var(--lq-card)] px-5 py-4 text-center text-[10px] font-semibold text-[var(--lq-ink-soft)] sm:block">Signalhouse participant preview · no live networking</div>}>
     <ParticipantTop connection={connection} onChange={setConnection} />
-    {participantRoute ? <SessionPlaceholder navigate={navigate} connection={connection} /> : <WaitingRoom navigate={navigate} connection={connection} />}
+    {participantRoute ? <LiveParticipantQuiz navigate={navigate} connection={connection} onConnectionChange={setConnection} /> : <WaitingRoom navigate={navigate} connection={connection} />}
     <div className="border-t border-[var(--lq-line)] bg-[#fbfaf7] px-5 py-4"><div className="flex items-center justify-center gap-2 text-[10px] font-semibold text-[var(--lq-ink-soft)]"><MessageCircle className="h-3.5 w-3.5" /> Need a hand? Ask your host.</div></div>
   </AppShell>;
 }
