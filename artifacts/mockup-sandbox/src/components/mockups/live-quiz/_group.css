@@ -4,8 +4,8 @@
   --lq-paper: #f8f5ef;
   --lq-card: #fffdfa;
   --lq-line: #e3dfd6;
-  --lq-signal: #ed6d4d;
-  --lq-signal-deep: #c74e35;
+  --lq-signal: #c74e35;
+  --lq-signal-deep: #a63d2b;
   --lq-mint: #b7e1d5;
   --lq-mint-deep: #397f75;
   --lq-sun: #f4cb68;
@@ -96,8 +96,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lq-rise,
-  .lq-pulse {
-    animation: none;
+  .live-quiz *,
+  .live-quiz *::before,
+  .live-quiz *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }

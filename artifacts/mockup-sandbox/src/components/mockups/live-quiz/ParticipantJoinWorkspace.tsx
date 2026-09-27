@@ -19,13 +19,13 @@ import {
 import { AppShell } from "./_shared/AppShell";
 import {
   ConnectionStatus,
+  goToPreviewComponent,
   StatusBadge,
   usePreviewRoute,
   type ConnectionState,
 } from "./_shared/Primitives";
+import { demoSession, readPreviewSessionState } from "./_shared/demoData";
 
-const DEMO_SESSION_CODE = "HARBOR-47";
-const DEMO_QUIZ_TITLE = "Harbor House Quiz";
 const DEMO_PARTICIPANT_COUNT = 4;
 
 type ParticipantFlowState =
@@ -79,7 +79,7 @@ function StateNotice({ state }: { state: ParticipantFlowState }) {
   const copy: Record<Exclude<ParticipantFlowState, "default">, { title: string; description: string; icon: typeof Info }> = {
     joining: { title: "Checking the room", description: "This preview is checking the supplied name and session code.", icon: LoaderCircle },
     invalid: { title: "Check those details", description: "Enter your name and a session code before joining the quiz.", icon: CircleAlert },
-    unavailable: { title: "That room is unavailable", description: `This preview accepts ${DEMO_SESSION_CODE}. A production backend would validate the supplied code here.`, icon: CircleAlert },
+     unavailable: { title: "That room is unavailable", description: `This preview accepts ${demoSession.sessionCode}. A production backend would validate the supplied code here.`, icon: CircleAlert },
     locked: { title: "The lobby is locked", description: "The host is not accepting new participants right now.", icon: LockKeyhole },
     full: { title: "The room is full", description: "This session has reached its participant limit.", icon: UsersRound },
     "connection-error": { title: "Connection interrupted", description: "We could not reach the room. Check the connection and try again.", icon: WifiOff },
@@ -94,7 +94,7 @@ function StateNotice({ state }: { state: ParticipantFlowState }) {
   const iconClass = state === "joining" || state === "reconnecting" ? "animate-spin" : "";
 
   return (
-    <div className={`mt-5 rounded-2xl border p-4 ${stateTone(state) === "danger" ? "border-[#ebbbb9] bg-[#fff5f3] text-[#873d40]" : stateTone(state) === "warning" ? "border-[#ead28d] bg-[#fff8df] text-[#806a27]" : "border-[#a8d7ca] bg-[#edf9f4] text-[#2e7168]"}`}>
+    <div className={`mt-5 rounded-2xl border p-4 ${stateTone(state) === "danger" ? "border-[#ebbbb9] bg-[#fff5f3] text-[#873d40]" : stateTone(state) === "warning" ? "border-[#ead28d] bg-[#fff8df] text-[#806a27]" : "border-[#a8d7ca] bg-[#edf9f4] text-[#2e7168]"}`} role={state === "invalid" || state === "unavailable" || state === "connection-error" || state === "rejected" ? "alert" : "status"} aria-live="polite">
       <div className="flex items-start gap-3">
         <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${iconClass}`} />
         <div>
@@ -182,6 +182,8 @@ function ParticipantJoinForm({
         <label className="block text-xs font-bold text-[var(--lq-ink)]">
           Participant Name
           <input
+            id="participant-name"
+            name="participantName"
             autoComplete="name"
             autoFocus={!prefilled}
             value={name}
@@ -193,11 +195,13 @@ function ParticipantJoinForm({
         <label className="block text-xs font-bold text-[var(--lq-ink)]">
           Session Code
           <input
+            id="participant-session-code"
+            name="sessionCode"
             autoCapitalize="characters"
             autoComplete="one-time-code"
             value={sessionCode}
             onChange={(event) => onSessionCodeChange(event.target.value.toUpperCase())}
-            placeholder="e.g. HARBOR-47"
+            placeholder={`e.g. ${demoSession.sessionCode}`}
             className="lq-focus mt-2 w-full rounded-xl border border-[var(--lq-line)] bg-[#fbfaf7] px-3.5 py-3 text-sm font-bold tracking-[0.08em] text-[var(--lq-ink)] outline-none transition-colors placeholder:text-[#9a9eaa] placeholder:font-normal placeholder:tracking-normal focus:border-[#d98a76] focus:bg-[var(--lq-card)]"
           />
         </label>
@@ -263,7 +267,7 @@ function ParticipantLobby({
       <div className="mt-5 lq-card rounded-3xl p-5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-xs font-semibold text-[var(--lq-ink-soft)]">Harbor House Quiz</div>
+           <div className="text-xs font-semibold text-[var(--lq-ink-soft)]">{demoSession.title}</div>
             <div className="mt-1 text-lg font-extrabold">Room status</div>
           </div>
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#fff8df] text-[#92721d]"><UsersRound className="h-5 w-5" /></div>
@@ -294,7 +298,12 @@ function ParticipantLobby({
         </div>
       </div>
 
-      {isReconnecting && <div className="mt-5 text-center text-[11px] font-semibold text-[var(--lq-ink-soft)]">Trying to restore your connection…</div>}
+       {isApproved && (
+         <button type="button" onClick={() => goToPreviewComponent("live-quiz/ParticipantShell", "/participant/session/harbor-47")} className="lq-focus mt-5 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-[var(--lq-signal)] px-4 py-3 text-sm font-bold text-white hover:bg-[var(--lq-signal-deep)]">
+           Open live quiz preview <ArrowRight aria-hidden="true" className="h-4 w-4" />
+         </button>
+       )}
+       {isReconnecting && <div className="mt-5 text-center text-[11px] font-semibold text-[var(--lq-ink-soft)]" role="status" aria-live="polite">Trying to restore your connection…</div>}
     </div>
   );
 }
@@ -302,7 +311,7 @@ function ParticipantLobby({
 export function ParticipantJoinWorkspace() {
   const [route, navigate] = usePreviewRoute("/participant");
   const [name, setName] = useState("");
-  const initialCode = useMemo(() => readSessionParam() || (route === "/participant/lobby" ? DEMO_SESSION_CODE : ""), [route]);
+  const initialCode = useMemo(() => readSessionParam() || (route === "/participant/lobby" ? demoSession.sessionCode : ""), [route]);
   const [sessionCode, setSessionCode] = useState(initialCode);
   const [state, setState] = useState<ParticipantFlowState>(route === "/participant/lobby" ? "pending" : "default");
   const [connection, setConnection] = useState<ConnectionState>("connected");
@@ -329,13 +338,19 @@ export function ParticipantJoinWorkspace() {
       updateState("connection-error");
       return;
     }
-    if (normalizedCode !== DEMO_SESSION_CODE) {
+    if (normalizedCode !== demoSession.sessionCode) {
       updateState("unavailable");
       return;
     }
     updateState("joining");
     window.setTimeout(() => {
-      updateState("pending");
+      const previewSession = readPreviewSessionState();
+      if (previewSession.lobbyLocked) {
+        updateState("locked");
+        return;
+      }
+      const approved = previewSession.approvedParticipants.some((participant) => participant.toLowerCase() === name.trim().toLowerCase());
+      updateState(approved ? "approved" : "pending");
       navigate("/participant/lobby");
     }, 650);
   };
@@ -357,7 +372,7 @@ export function ParticipantJoinWorkspace() {
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="lq-mono text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--lq-signal-deep)]">Participant entry</div>
-            <div className="mt-1 text-sm font-bold">{isLobby ? DEMO_QUIZ_TITLE : "Join a live quiz"}</div>
+            <div className="mt-1 text-sm font-bold">{isLobby ? demoSession.title : "Join a live quiz"}</div>
           </div>
           <ConnectionStatus state={appConnection} />
         </div>

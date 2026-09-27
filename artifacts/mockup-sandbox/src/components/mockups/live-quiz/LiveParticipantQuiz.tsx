@@ -23,6 +23,7 @@ import {
   StatusBadge,
   type ConnectionState,
 } from "./_shared/Primitives";
+import { demoLeaderboard, demoSession } from "./_shared/demoData";
 
 type ParticipantLiveState =
   | "running"
@@ -62,12 +63,7 @@ const answerOptions: AnswerOption[] = [
   { id: "berkeley", label: "Berkeley" },
 ];
 
-const leaderboard: LeaderboardRow[] = [
-  { rank: 1, name: "Rhea Patel", score: 120, change: "Up 2 places" },
-  { rank: 2, name: "Owen Bell", score: 110, change: "Holding steady" },
-  { rank: 3, name: "You · Maya Chen", score: 95, change: "Up 1 place" },
-  { rank: 4, name: "Sam Ortega", score: 80, change: "Down 1 place" },
-];
+const leaderboard = demoLeaderboard;
 
 const stateOptions: ParticipantLiveState[] = [
   "running",
@@ -196,7 +192,7 @@ function RecoveryNotice({ state }: { state: ParticipantLiveState }) {
   };
 
   return (
-    <div className={`mt-4 rounded-2xl border p-4 ${toneClasses[notice.tone]}`}>
+    <div className={`mt-4 rounded-2xl border p-4 ${toneClasses[notice.tone]}`} role={notice.tone === "danger" ? "alert" : "status"} aria-live="polite">
       <div className="flex items-start gap-3">
         <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${state === "connecting" || state === "reconnecting" ? "animate-spin" : ""}`} />
         <div>
@@ -276,7 +272,8 @@ function QuestionView({
         <div className="flex items-center gap-2 text-[#806a27]"><Clock3 className="h-4 w-4" /><span className="text-xs font-bold">Time remaining</span></div>
         <span className="lq-mono text-lg font-bold text-[#806a27]">00:30</span>
       </div>
-      <div className="mt-5 space-y-3">
+      <fieldset className="mt-5 space-y-3" role="radiogroup" aria-labelledby="participant-question-heading">
+        <legend className="sr-only">Choose one answer</legend>
         {answerOptions.map((option, index) => {
           const selected = selectedOptionId === option.id;
           return (
@@ -285,7 +282,8 @@ function QuestionView({
               type="button"
               onClick={() => onSelect(option.id)}
               disabled={!canAnswer}
-              aria-pressed={selected}
+               role="radio"
+               aria-checked={selected}
               className={`lq-focus flex min-h-[64px] w-full items-center gap-3 rounded-2xl border p-3.5 text-left transition-colors ${selected ? "border-[#df836f] bg-[#fff0eb] text-[var(--lq-signal-deep)] shadow-[0_0_0_2px_rgba(223,131,111,0.12)]" : "border-[var(--lq-line)] bg-[#fbfaf7] text-[var(--lq-ink)] hover:border-[#d6a496]"} disabled:cursor-not-allowed disabled:opacity-60`}
             >
               <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold ${selected ? "bg-[var(--lq-signal)] text-white" : "bg-[#f0ede7] text-[var(--lq-ink-soft)]"}`}>{String.fromCharCode(65 + index)}</span>
@@ -294,7 +292,7 @@ function QuestionView({
             </button>
           );
         })}
-      </div>
+      </fieldset>
       <div className="mt-5 flex items-start gap-2 rounded-2xl bg-[#edf8f4] p-3.5 text-[#397f75]">
         <Info className="mt-0.5 h-4 w-4 shrink-0" />
         <p className="text-[11px] leading-5">{selectedOptionId ? "Your selection is shown locally. The server still owns submission and answer acceptance." : "Choose an answer while the host keeps answering open."}</p>
@@ -371,7 +369,7 @@ function ResultsView({ navigate }: { navigate: (route: string) => void }) {
       <div className="rounded-[28px] bg-[var(--lq-ink)] p-5 text-[var(--lq-paper)]">
         <div className="flex items-center justify-between gap-3"><StatusBadge tone="ready">Complete</StatusBadge><CheckCircle2 className="h-5 w-5 text-[var(--lq-sun)]" /></div>
         <h2 id="participant-results-heading" className="lq-display mt-7 text-[36px] font-extrabold leading-[0.96]">You made<br /><span className="text-[var(--lq-sun)]">your mark.</span></h2>
-        <p className="mt-4 text-sm leading-6 text-[#c0cad4]">Harbor House Quiz is finished. Here are the final results supplied by the session.</p>
+        <p className="mt-4 text-sm leading-6 text-[#c0cad4]">{demoSession.title} is finished. Here are the final results supplied by the session.</p>
         <div className="mt-7 grid grid-cols-2 gap-3 border-t border-[#3a4b63] pt-4">
           <div><div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9eacbd]">Final rank</div><div className="lq-mono mt-1 text-2xl font-bold text-[var(--lq-sun)]">#3</div></div>
           <div><div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9eacbd]">Final score</div><div className="lq-mono mt-1 text-2xl font-bold text-[var(--lq-sun)]">95 pts</div></div>
@@ -405,14 +403,14 @@ export function LiveParticipantQuiz({ navigate, connection, onConnectionChange }
       <div className="lq-rise mt-5 flex items-center justify-between gap-3">
         <div>
           <div className="lq-mono text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--lq-signal-deep)]">Live participant</div>
-          <h1 className="lq-display mt-1 text-2xl font-extrabold">Harbor House Quiz</h1>
+          <h1 className="lq-display mt-1 text-2xl font-extrabold">{demoSession.title}</h1>
         </div>
         <ConnectionStatus state={displayConnection} label={connectionLabel} />
       </div>
 
       <div className="mt-4 rounded-2xl border border-[var(--lq-line)] bg-[var(--lq-card)] p-4">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-[var(--lq-ink-soft)]"><Users className="h-4 w-4" /><span className="text-xs font-bold">HARBOR-47</span></div>
+          <div className="flex items-center gap-2 text-[var(--lq-ink-soft)]"><Users aria-hidden="true" className="h-4 w-4" /><span className="text-xs font-bold">{demoSession.sessionCode}</span></div>
           <StatusBadge tone={statusTone(liveState)}>{stateLabel(liveState)}</StatusBadge>
         </div>
         <ProgressBar view={effectiveView} />

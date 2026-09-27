@@ -1,7 +1,7 @@
 import "./_group.css";
 import { useState, type FormEvent } from "react";
 import { AlertTriangle, ArrowLeft, CheckCircle2, Clock3, Eye, EyeOff, LoaderCircle, LockKeyhole, Radio, WifiOff } from "lucide-react";
-import { BrandMark, cn, StatusBadge, usePreviewRoute } from "./_shared/Primitives";
+import { BrandMark, cn, goToPreviewComponent, StatusBadge, usePreviewRoute } from "./_shared/Primitives";
 
 type PreviewState = "default" | "loading" | "invalid" | "validation" | "connection" | "expired";
 
@@ -54,13 +54,14 @@ export function HostLogin({
     onLogin?.(username, password);
     if (previewState === "default") {
       setLocalNotice("Preview sign-in submitted locally.");
+      window.setTimeout(() => goToPreviewComponent("live-quiz/TemplateWorkspace", "/host/dashboard"), 350);
     }
   };
 
   return (
     <div className="live-quiz min-h-[100dvh] bg-[var(--lq-paper)]">
       <header className="mx-auto flex max-w-[1180px] items-center justify-between px-5 py-5 sm:px-8 lg:px-10">
-        <button type="button" onClick={() => navigate("/")} className="lq-focus rounded-xl">
+        <button type="button" onClick={() => goToPreviewComponent("live-quiz/LandingPage", "/")} aria-label="Back to Signalhouse" className="lq-focus rounded-xl">
           <BrandMark />
         </button>
         <StatusBadge tone="neutral">Host access</StatusBadge>
@@ -117,8 +118,9 @@ export function HostLogin({
                   placeholder="Enter your host username"
                   className={cn("lq-focus w-full rounded-xl border bg-[#fbfaf7] px-3.5 py-3 text-sm text-[var(--lq-ink)] placeholder:text-[#a4a8ae]", hasValidation && !username.trim() ? "border-[#d9867e]" : "border-[var(--lq-line)]")}
                   aria-invalid={hasValidation && !username.trim()}
+                   aria-describedby={hasValidation && !username.trim() ? "signalhouse-username-error" : undefined}
                 />
-                {hasValidation && !username.trim() && <p className="mt-1.5 text-xs font-semibold text-[#ad4447]">Enter your username to continue.</p>}
+                 {hasValidation && !username.trim() && <p id="signalhouse-username-error" className="mt-1.5 text-xs font-semibold text-[#ad4447]">Enter your username to continue.</p>}
               </div>
 
               <div>
@@ -134,12 +136,13 @@ export function HostLogin({
                     placeholder="Enter your password"
                     className={cn("lq-focus w-full rounded-xl border bg-[#fbfaf7] px-3.5 py-3 pr-12 text-sm text-[var(--lq-ink)] placeholder:text-[#a4a8ae]", hasValidation && !password ? "border-[#d9867e]" : "border-[var(--lq-line)]")}
                     aria-invalid={hasValidation && !password}
+                     aria-describedby={hasValidation && !password ? "signalhouse-password-error" : undefined}
                   />
-                  <button type="button" onClick={() => setShowPassword((visible) => !visible)} className="lq-focus absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-2 text-[var(--lq-ink-soft)] hover:bg-[#f0ede7]" aria-label={showPassword ? "Hide password" : "Show password"}>
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                   <button type="button" onClick={() => setShowPassword((visible) => !visible)} className="lq-focus absolute right-1 top-1/2 flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-lg p-2 text-[var(--lq-ink-soft)] hover:bg-[#f0ede7]" aria-label={showPassword ? "Hide password" : "Show password"}>
+                     {showPassword ? <EyeOff aria-hidden="true" className="h-4 w-4" /> : <Eye aria-hidden="true" className="h-4 w-4" />}
                   </button>
                 </div>
-                {hasValidation && !password && <p className="mt-1.5 text-xs font-semibold text-[#ad4447]">Enter your password to continue.</p>}
+                 {hasValidation && !password && <p id="signalhouse-password-error" className="mt-1.5 text-xs font-semibold text-[#ad4447]">Enter your password to continue.</p>}
               </div>
 
               <button
@@ -193,7 +196,7 @@ export function HostLogin({
             </div>
           </div>
 
-          <button type="button" onClick={() => navigate("/")} className="lq-focus mx-auto mt-5 flex items-center gap-1.5 text-xs font-bold text-[var(--lq-ink-soft)] hover:text-[var(--lq-signal-deep)]">
+          <button type="button" onClick={() => goToPreviewComponent("live-quiz/LandingPage", "/")} className="lq-focus mx-auto mt-5 flex items-center gap-1.5 text-xs font-bold text-[var(--lq-ink-soft)] hover:text-[var(--lq-signal-deep)]">
             <ArrowLeft className="h-3.5 w-3.5" />
             Back to Signalhouse
           </button>

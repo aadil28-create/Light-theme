@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AlertCircle,
   ArrowLeft,
@@ -30,25 +30,41 @@ export function usePreviewRoute(defaultRoute: string) {
   const [route, setRoute] = useState(readRoute);
 
   useEffect(() => {
-    const onPopState = () => setRoute(readRoute());
+    const onPopState = () => {
+      setRoute(readRoute());
+      window.requestAnimationFrame(() => document.getElementById("lq-main")?.focus());
+    };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
   const navigate = (nextRoute: string) => {
-    const nextUrl = `${window.location.pathname}?route=${encodeURIComponent(nextRoute)}`;
+    const params = new URLSearchParams(window.location.search);
+    params.set("route", nextRoute);
+    const nextUrl = `${window.location.pathname}?${params.toString()}`;
     window.history.pushState({ route: nextRoute }, "", nextUrl);
     setRoute(nextRoute);
+    window.requestAnimationFrame(() => document.getElementById("lq-main")?.focus());
   };
 
   return [route, navigate] as const;
 }
 
+export function goToPreviewComponent(component: string, route: string) {
+  const params = new URLSearchParams(window.location.search);
+  params.set("route", route);
+  const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+  window.location.assign(`${basePath}/preview/${component}?${params.toString()}`);
+}
+
 export function RoleSwitcher({ active }: { active: "host" | "participant" }) {
   const goToRole = (role: "host" | "participant") => {
     if (role === active) return;
-    const target = role === "host" ? "HostShell" : "ParticipantShell";
-    window.location.assign(window.location.pathname.replace(/(HostShell|ParticipantShell)$/, target));
+    const target = role === "host" ? "HostLogin" : "ParticipantJoinWorkspace";
+    const params = new URLSearchParams(window.location.search);
+    params.set("route", role === "host" ? "/host/login" : "/participant");
+    const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+    window.location.assign(`${basePath}/preview/live-quiz/${target}?${params.toString()}`);
   };
 
   return (
@@ -56,7 +72,7 @@ export function RoleSwitcher({ active }: { active: "host" | "participant" }) {
       <button
         type="button"
         onClick={() => goToRole("host")}
-        className={cn("lq-focus rounded-full px-3 py-1.5 text-xs font-bold transition-colors", active === "host" ? "bg-[var(--lq-ink)] text-[var(--lq-paper)]" : "text-[var(--lq-ink-soft)] hover:bg-[#f1eee8]")}
+        className={cn("lq-focus min-h-[36px] rounded-full px-3 py-1.5 text-xs font-bold transition-colors", active === "host" ? "bg-[var(--lq-ink)] text-[var(--lq-paper)]" : "text-[var(--lq-ink-soft)] hover:bg-[#f1eee8]")}
         aria-pressed={active === "host"}
       >
         Host
@@ -64,7 +80,7 @@ export function RoleSwitcher({ active }: { active: "host" | "participant" }) {
       <button
         type="button"
         onClick={() => goToRole("participant")}
-        className={cn("lq-focus rounded-full px-3 py-1.5 text-xs font-bold transition-colors", active === "participant" ? "bg-[var(--lq-signal)] text-white" : "text-[var(--lq-ink-soft)] hover:bg-[#f1eee8]")}
+        className={cn("lq-focus min-h-[36px] rounded-full px-3 py-1.5 text-xs font-bold transition-colors", active === "participant" ? "bg-[var(--lq-signal)] text-white" : "text-[var(--lq-ink-soft)] hover:bg-[#f1eee8]")}
         aria-pressed={active === "participant"}
       >
         Participant
@@ -77,8 +93,8 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex items-center gap-2.5">
       <div className="relative flex h-9 w-9 items-center justify-center rounded-[13px] bg-[var(--lq-signal)] text-white shadow-[3px_3px_0_var(--lq-ink)]">
-        <Radio className="h-4 w-4" strokeWidth={2.4} />
-        <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[var(--lq-sun)]" />
+        <Radio aria-hidden="true" className="h-4 w-4" strokeWidth={2.4} />
+        <span aria-hidden="true" className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[var(--lq-sun)]" />
       </div>
       {!compact && (
         <div>
@@ -165,7 +181,7 @@ export function PageHeader({
 
 export function LoadingState({ label = "Preparing the room" }: { label?: string }) {
   return (
-    <div className="lq-card rounded-2xl p-5" aria-label="Loading state">
+    <div className="lq-card rounded-2xl p-5" aria-label="Loading state" role="status" aria-live="polite">
       <div className="flex items-center gap-3">
         <div className="h-9 w-9 animate-pulse rounded-xl bg-[#e9e4da]" />
         <div className="flex-1 space-y-2">
@@ -205,17 +221,53 @@ export function ErrorState({ onRetry }: { onRetry?: () => void }) {
 }
 
 export function ConfirmationDialog({ open, title, description, confirmLabel = "Confirm", onConfirm, onClose }: { open: boolean; title: string; description: string; confirmLabel?: string; onConfirm: () => void; onClose: () => void }) {
+  const titleId = useId();
+  const descriptionId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousFocus = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    previousFocus.current = document.activeElement as HTMLElement | null;
+    closeButtonRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])")).filter((element) => !element.hasAttribute("disabled"));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      previousFocus.current?.focus();
+    };
+  }, [open, onClose]);
+
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(21,36,61,0.36)] p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <div role="dialog" aria-modal="true" aria-labelledby="lq-dialog-title" className="lq-card w-full max-w-md rounded-3xl p-6">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} className="lq-card w-full max-w-md rounded-3xl p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-[#fff0eb] text-[var(--lq-signal-deep)]"><Info className="h-5 w-5" /></div>
-            <h2 id="lq-dialog-title" className="lq-display text-xl font-extrabold">{title}</h2>
-            <p className="mt-2 text-sm leading-6 text-[var(--lq-ink-soft)]">{description}</p>
+            <h2 id={titleId} className="lq-display text-xl font-extrabold">{title}</h2>
+            <p id={descriptionId} className="mt-2 text-sm leading-6 text-[var(--lq-ink-soft)]">{description}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close dialog" className="lq-focus rounded-full p-2 text-[var(--lq-ink-soft)] hover:bg-[#f0ede7]"><X className="h-4 w-4" /></button>
+          <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close dialog" className="lq-focus flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full p-2 text-[var(--lq-ink-soft)] hover:bg-[#f0ede7]"><X aria-hidden="true" className="h-4 w-4" /></button>
         </div>
         <div className="mt-6 flex justify-end gap-2">
           <button type="button" onClick={onClose} className="lq-focus rounded-xl px-4 py-2.5 text-sm font-bold text-[var(--lq-ink-soft)] hover:bg-[#f0ede7]">Keep room open</button>

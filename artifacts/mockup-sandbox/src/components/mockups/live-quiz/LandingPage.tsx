@@ -1,6 +1,6 @@
 import "./_group.css";
 import { ArrowRight, LogIn, UsersRound } from "lucide-react";
-import { BrandMark, StatusBadge, usePreviewRoute } from "./_shared/Primitives";
+import { BrandMark, StatusBadge, goToPreviewComponent, usePreviewRoute } from "./_shared/Primitives";
 
 export function LandingPage() {
   const [route, navigate] = usePreviewRoute("/");
@@ -32,7 +32,7 @@ export function LandingPage() {
           <section className="mx-auto mt-12 grid max-w-[920px] gap-4 md:grid-cols-[1.08fr_0.92fr]" aria-label="Choose your Signalhouse view">
             <button
               type="button"
-              onClick={() => navigate("/host")}
+              onClick={() => goToPreviewComponent("live-quiz/HostLogin", "/host/login")}
               className="lq-focus group relative overflow-hidden rounded-[28px] bg-[var(--lq-ink)] p-6 text-left text-[var(--lq-paper)] shadow-[0_18px_40px_rgba(21,36,61,0.16)] transition-transform hover:-translate-y-1 sm:p-8"
             >
               <div className="pointer-events-none absolute -right-12 -top-14 h-44 w-44 rounded-full border-[22px] border-[rgba(244,203,104,0.16)]" />
@@ -56,7 +56,7 @@ export function LandingPage() {
 
             <button
               type="button"
-              onClick={() => navigate("/participant")}
+              onClick={() => goToPreviewComponent("live-quiz/ParticipantJoinWorkspace", "/participant")}
               className="lq-focus group rounded-[28px] border border-[var(--lq-line)] bg-[var(--lq-card)] p-6 text-left shadow-[0_12px_30px_rgba(60,62,72,0.07)] transition-transform hover:-translate-y-1 sm:p-8"
             >
               <div className="flex min-h-[220px] flex-col">

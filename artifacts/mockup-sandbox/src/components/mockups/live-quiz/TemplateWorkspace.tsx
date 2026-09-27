@@ -44,6 +44,7 @@ import {
   StatusBadge,
   usePreviewRoute,
 } from "./_shared/Primitives";
+import { demoLeaderboard, demoSession, readPreviewSessionState, writePreviewSessionState } from "./_shared/demoData";
 
 type Tone = "ink" | "signal" | "quiet";
 
@@ -90,18 +91,13 @@ type Participant = {
 };
 
 const initialParticipants: Participant[] = [
-  { id: "mara", name: "Mara Chen", initials: "MC", joined: "just now", status: "Pending" },
+  { id: "maya", name: demoSession.participantName, initials: demoSession.participantInitials, joined: "just now", status: "Pending" },
   { id: "owen", name: "Owen Bell", initials: "OB", joined: "2 min ago", status: "Approved" },
   { id: "rhea", name: "Rhea Patel", initials: "RP", joined: "3 min ago", status: "Connected" },
   { id: "sam", name: "Sam Ortega", initials: "SO", joined: "4 min ago", status: "Disconnected" },
   { id: "jules", name: "Jules Hart", initials: "JH", joined: "5 min ago", status: "Rejected" },
   { id: "noah", name: "Noah Williams", initials: "NW", joined: "6 min ago", status: "Removed" },
 ];
-
-const demoSession: SessionPreview = {
-  sessionCode: "HARBOR-47",
-  joinUrl: "https://play.signalhouse.example/participant?session=HARBOR-47",
-};
 
 const initialTemplates: Template[] = [
   {
@@ -1010,6 +1006,101 @@ function HostSessionLobbyPage({
   );
 }
 
+function HostResultsPage({ navigate }: { navigate: (route: string) => void }) {
+  return (
+    <div className="mx-auto max-w-[1180px] px-5 py-7 sm:px-8 lg:px-10">
+      <Breadcrumbs items={[{ label: "Host console", onClick: () => navigate("/host/dashboard") }, { label: "Results" }]} />
+      <PageHeader
+        eyebrow="Session complete"
+        title="A room worth remembering."
+        description={`${demoSession.title} has ended. These are supplied preview results, ready for review or a new room.`}
+      >
+        <Button tone="quiet" icon={LayoutDashboard} onClick={() => navigate("/host/dashboard")}>Back to dashboard</Button>
+      </PageHeader>
+
+      <section className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-3xl bg-[var(--lq-ink)] p-5 text-[var(--lq-paper)]">
+          <StatusBadge tone="ready">Session finished</StatusBadge>
+          <div className="lq-display mt-6 text-3xl font-extrabold">{demoSession.sessionCode}</div>
+          <p className="mt-2 text-xs leading-5 text-[#c0cad4]">Final state supplied by the session service.</p>
+        </div>
+        <div className="lq-card rounded-3xl p-5">
+          <div className="flex items-center gap-2 text-[var(--lq-mint-deep)]"><Users aria-hidden="true" className="h-4 w-4" /><span className="text-xs font-bold">Participants</span></div>
+          <div className="lq-display mt-4 text-3xl font-extrabold">32</div>
+          <p className="mt-1 text-xs text-[var(--lq-ink-soft)]">players in the finished room</p>
+        </div>
+        <div className="lq-card rounded-3xl p-5">
+          <div className="flex items-center gap-2 text-[#665b86]"><BarChart3 aria-hidden="true" className="h-4 w-4" /><span className="text-xs font-bold">Questions</span></div>
+          <div className="lq-display mt-4 text-3xl font-extrabold">03</div>
+          <p className="mt-1 text-xs text-[var(--lq-ink-soft)]">supplied in this preview</p>
+        </div>
+      </section>
+
+      <section className="lq-card mt-5 rounded-3xl p-5 sm:p-6" aria-labelledby="final-results-heading">
+        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--lq-line)] pb-5">
+          <div>
+            <div className="flex items-center gap-2 text-[var(--lq-signal-deep)]"><CheckCircle2 aria-hidden="true" className="h-4 w-4" /><span className="text-xs font-bold">Final leaderboard</span></div>
+            <h2 id="final-results-heading" className="lq-display mt-1 text-2xl font-extrabold">The room has a winner.</h2>
+          </div>
+          <StatusBadge tone="neutral">Preview results</StatusBadge>
+        </div>
+        <div className="mt-4 divide-y divide-[var(--lq-line)]">
+          {demoLeaderboard.map((row) => (
+            <div key={row.rank} className="flex items-center gap-3 py-3.5">
+              <span className={`lq-mono flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold ${row.rank === 1 ? "bg-[#fff8df] text-[#8d701e]" : "bg-[#f0ede7] text-[var(--lq-ink-soft)]"}`}>{String(row.rank).padStart(2, "0")}</span>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-bold">{row.name}</div>
+                <div className="mt-1 text-xs text-[var(--lq-ink-soft)]">{row.change}</div>
+              </div>
+              <div className="text-right"><div className="lq-display text-xl font-extrabold">{row.score}</div><div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--lq-ink-soft)]">points</div></div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-5 flex flex-wrap gap-3 border-t border-[var(--lq-line)] pt-5">
+          <Button tone="signal" icon={LayoutDashboard} onClick={() => navigate("/host/dashboard")}>Return to dashboard</Button>
+          <Button tone="quiet" icon={CirclePlus} onClick={() => navigate("/host/session/new")}>Create another session</Button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function HostDashboardPage({ navigate }: { navigate: (route: string) => void }) {
+  return (
+    <div className="mx-auto max-w-[1280px] px-5 py-7 sm:px-8 lg:px-10">
+      <div className="lq-rise">
+        <Breadcrumbs items={[{ label: "Host console" }, { label: "Dashboard" }]} />
+        <PageHeader eyebrow="Friday · 14 June 2024" title="Good evening, Maya." description="The room is calm, the questions are queued, and your next move is clear.">
+          <Button tone="signal" icon={CirclePlus} onClick={() => navigate("/host/session/new")}>Create session</Button>
+        </PageHeader>
+      </div>
+      <section className="grid gap-4 xl:grid-cols-[1.45fr_0.85fr]">
+        <div className="relative overflow-hidden rounded-3xl bg-[var(--lq-ink)] p-6 text-[var(--lq-paper)] sm:p-7">
+          <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full border-[28px] border-[rgba(244,203,104,0.15)]" />
+          <div className="relative">
+            <div className="flex flex-wrap items-center justify-between gap-3"><StatusBadge tone="live">Live room ready</StatusBadge><RouteHint route="/host/session/harbor-47" /></div>
+            <p className="mt-8 text-sm font-semibold text-[#c0cad4]">Current room</p>
+            <h2 className="lq-display mt-1 text-3xl font-extrabold sm:text-4xl">{demoSession.title}</h2>
+            <p className="mt-2 max-w-md text-sm leading-6 text-[#cbd3dd]">Round 01 · Warm-up lap is ready when the room is.</p>
+            <div className="mt-7 flex flex-wrap items-center gap-6"><div><div className="lq-display text-3xl font-extrabold">28<span className="text-lg text-[#aeb9c9]">/32</span></div><div className="mt-1 text-xs text-[#c0cad4]">players joined</div></div><div className="h-9 w-px bg-[#4c5b70]" /><div><div className="lq-display text-3xl font-extrabold">06:00</div><div className="mt-1 text-xs text-[#c0cad4]">planned duration</div></div></div>
+            <button type="button" onClick={() => navigate("/host/session/harbor-47")} className="lq-focus mt-7 inline-flex min-h-[44px] items-center gap-1.5 text-sm font-bold text-[var(--lq-sun)] hover:text-[#ffe9a5]">Open room controls <ArrowRight aria-hidden="true" className="h-4 w-4" /></button>
+          </div>
+        </div>
+        <div className="lq-card rounded-3xl p-6 sm:p-7">
+          <p className="text-sm font-semibold text-[var(--lq-ink-soft)]">Tonight at a glance</p>
+          <h2 className="lq-display mt-1 text-2xl font-extrabold">Ready when you are</h2>
+          <div className="mt-6 grid grid-cols-2 gap-3"><div className="rounded-2xl bg-[#f1eef9] p-4"><div className="text-xs font-semibold text-[var(--lq-ink-soft)]">Question sets</div><div className="lq-display mt-2 text-2xl font-extrabold">12</div><div className="mt-1 text-[11px] font-semibold text-[var(--lq-ink-soft)]">+2 this month</div></div><div className="rounded-2xl bg-[#edf8f4] p-4"><div className="text-xs font-semibold text-[var(--lq-ink-soft)]">Avg. room size</div><div className="lq-display mt-2 text-2xl font-extrabold">24</div><div className="mt-1 text-[11px] font-semibold text-[var(--lq-ink-soft)]">players / night</div></div></div>
+          <button type="button" onClick={() => navigate("/host/templates")} className="lq-focus mt-5 flex min-h-[44px] w-full items-center justify-between border-t border-[var(--lq-line)] pt-4 text-sm font-bold text-[var(--lq-ink-soft)] hover:text-[var(--lq-signal-deep)]"><span>Browse your question sets</span><ArrowRight aria-hidden="true" className="h-4 w-4" /></button>
+        </div>
+      </section>
+      <section className="lq-card mt-5 rounded-3xl p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-semibold text-[var(--lq-ink-soft)]">Room rhythm</p><h2 className="lq-display mt-1 text-xl font-extrabold">The next three signals</h2></div><button type="button" onClick={() => navigate("/host/session/harbor-47")} className="lq-focus min-h-[44px] text-xs font-bold text-[var(--lq-signal-deep)]">Manage room</button></div>
+        <div className="mt-5 grid gap-2 md:grid-cols-3">{["Warm-up lap", "Things with wings", "The final signal"].map((round, index) => <div key={round} className="flex items-center gap-3 rounded-2xl bg-[#fbfaf7] p-3"><span className={`lq-mono flex h-9 w-9 items-center justify-center rounded-xl text-xs font-bold ${index === 0 ? "bg-[var(--lq-signal)] text-white" : "bg-[#f0ede7] text-[var(--lq-ink-soft)]"}`}>{String(index + 1).padStart(2, "0")}</span><div><div className="text-sm font-bold">{round}</div><div className="mt-1 text-xs text-[var(--lq-ink-soft)]">{index === 0 ? "Ready" : "Queued"}</div></div></div>)}</div>
+      </section>
+    </div>
+  );
+}
+
 function HandoffPage({ route, navigate }: { route: string; navigate: (route: string) => void }) {
   const signedOut = route === "/signed-out";
   if (signedOut) {
@@ -1059,9 +1150,12 @@ export function TemplateWorkspace() {
     requireApproval: true,
     maximumParticipants: "",
   });
-  const [participants, setParticipants] = useState<Participant[]>(initialParticipants);
-  const [lobbyLocked, setLobbyLocked] = useState(false);
-  const [quizStarted, setQuizStarted] = useState(false);
+  const [participants, setParticipants] = useState<Participant[]>(() => {
+    const approvedParticipants = readPreviewSessionState().approvedParticipants;
+    return initialParticipants.map((participant) => approvedParticipants.includes(participant.name) ? { ...participant, status: "Approved" } : participant);
+  });
+  const [lobbyLocked, setLobbyLocked] = useState(() => readPreviewSessionState().lobbyLocked);
+  const [quizStarted, setQuizStarted] = useState(() => readPreviewSessionState().quizStarted);
 
   const showNotice = (message: string) => {
     setNotice(message);
@@ -1097,15 +1191,28 @@ export function TemplateWorkspace() {
     setParticipants(initialParticipants);
     setLobbyLocked(false);
     setQuizStarted(false);
+    writePreviewSessionState({ lobbyLocked: false, quizStarted: false, approvedParticipants: [] });
     showNotice("Session created locally. The host lobby is ready.");
     navigate("/host/session/harbor-47");
   };
   const onApproveParticipant = (id: string) => {
-    setParticipants((current) => current.map((participant) => participant.id === id ? { ...participant, status: "Approved" } : participant));
+    setParticipants((current) => {
+      const participant = current.find((item) => item.id === id);
+      if (participant) {
+        writePreviewSessionState({ approvedParticipants: [...new Set([...readPreviewSessionState().approvedParticipants, participant.name])] });
+      }
+      return current.map((item) => item.id === id ? { ...item, status: "Approved" } : item);
+    });
     showNotice("Participant approved locally.");
   };
   const onRejectParticipant = (id: string) => {
-    setParticipants((current) => current.map((participant) => participant.id === id ? { ...participant, status: "Rejected" } : participant));
+    setParticipants((current) => {
+      const participant = current.find((item) => item.id === id);
+      if (participant) {
+        writePreviewSessionState({ approvedParticipants: readPreviewSessionState().approvedParticipants.filter((name) => name !== participant.name) });
+      }
+      return current.map((item) => item.id === id ? { ...item, status: "Rejected" } : item);
+    });
     showNotice("Participant rejected locally.");
   };
   const onRemoveParticipant = (id: string) => {
@@ -1114,15 +1221,18 @@ export function TemplateWorkspace() {
   };
   const onLockLobby = () => {
     setLobbyLocked(true);
+    writePreviewSessionState({ lobbyLocked: true });
     showNotice("Lobby locked locally.");
   };
   const onUnlockLobby = () => {
     setLobbyLocked(false);
+    writePreviewSessionState({ lobbyLocked: false });
     showNotice("Lobby unlocked locally.");
   };
   const onStartQuiz = () => {
     setQuizStarted(true);
     setLobbyLocked(true);
+    writePreviewSessionState({ quizStarted: true, lobbyLocked: true });
     showNotice("Quiz started in the local preview.");
     navigate("/host/session/harbor-47/quiz");
   };
@@ -1137,17 +1247,13 @@ export function TemplateWorkspace() {
   };
   const onEndQuiz = () => {
     showNotice("End quiz sent to the local preview.");
+    navigate("/host/results/harbor-47");
   };
 
   const selectedTemplate = useMemo(() => templates.find((template) => template.id === "harbor-house") ?? templates[0], [templates]);
   const sessionTemplate = useMemo(() => templates.find((template) => template.id === sessionSettings.templateId) ?? selectedTemplate, [sessionSettings.templateId, selectedTemplate, templates]);
   const liveQuestion = questions[0] ?? initialQuestions[0];
-  const liveLeaderboard = [
-    { rank: 1, name: "Rhea Patel", score: 120, change: "Up 2 places" },
-    { rank: 2, name: "Owen Bell", score: 110, change: "Holding steady" },
-    { rank: 3, name: "Mara Chen", score: 95, change: "Up 1 place" },
-    { rank: 4, name: "Sam Ortega", score: 80, change: "Down 1 place" },
-  ];
+  const liveLeaderboard = demoLeaderboard.map((row) => ({ ...row }));
   const editingQuestionId = route.match(/\/questions\/(\d+)\/edit$/)?.[1];
   const editingQuestion = editingQuestionId ? questions.find((question) => question.id === Number(editingQuestionId)) : undefined;
   const isTemplatesSection = route.startsWith("/host/templates");
@@ -1206,7 +1312,11 @@ export function TemplateWorkspace() {
          onStartQuiz={onStartQuiz}
          onCopy={showNotice}
        />
-    ) : editingQuestionId ? (
+     ) : route === "/host/results/harbor-47" ? (
+       <HostResultsPage navigate={navigate} />
+     ) : route === "/host" || route === "/host/dashboard" ? (
+       <HostDashboardPage navigate={navigate} />
+     ) : editingQuestionId ? (
       <QuestionEditorPage key={route} question={editingQuestion} isNew={false} navigate={navigate} onCreate={onCreateQuestion} onUpdate={onUpdateQuestion} />
     ) : (
       <HandoffPage route={route} navigate={navigate} />

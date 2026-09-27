@@ -1,0 +1,124 @@
+COMPLETE CONSISTENCY, ACCESSIBILITY AND END-TO-END UI AUDIT
+Continue the SAME project.
+DO NOT redesign the application from scratch.
+Preserve the established:
+design system
+components
+routes
+navigation
+Host experience
+Participant experience
+QR joining flow
+This remains a UI-only donor.
+Do NOT add any database, backend, authentication provider, API server, WebSocket server, serverless infrastructure, scoring engine, timer engine, or replacement production logic.
+Now perform a COMPLETE UI/UX AUDIT of everything built so far.
+HOST JOURNEY TO VERIFY
+Host Login
+→ Dashboard
+→ Create or choose Template
+→ Manage Questions
+→ return using explicit app navigation
+→ Create Session
+→ backend-style generated Session Code
+→ Host Lobby
+→ Join Link
+→ QR
+→ Participant Management
+→ Lock / Unlock
+→ Start
+→ Live Question
+→ Pause / Resume
+→ Next
+→ Reveal
+→ Leaderboard
+→ End
+→ Final Results
+→ Dashboard
+PARTICIPANT JOURNEY TO VERIFY
+Landing
+→ Participant
+→ manual Session Code OR QR-derived URL
+→ Session Code automatically populated when supplied
+→ enter Name
+→ Join
+→ Waiting / Approval
+→ Question
+→ select Answer
+→ change Answer while allowed
+→ lock
+→ Reveal
+→ Leaderboard
+→ next Question
+→ Final Results
+AUDIT FOR:
+broken navigation
+reliance on browser Back
+inconsistent spacing
+inconsistent typography
+inconsistent visual states
+low contrast
+missing loading states
+missing empty states
+missing error states
+missing reconnect states
+poor mobile layouts
+horizontal scrolling
+inaccessible controls
+unclear status indicators
+destructive actions that are too easy to trigger
+weak Host desktop usability
+weak Participant mobile usability
+poor one-handed phone interaction
+ACCESSIBILITY
+Ensure:
+semantic headings
+proper form labels
+keyboard navigation
+visible focus states
+adequate contrast
+meaningful button labels
+appropriate ARIA attributes
+reduced-motion compatibility
+status not communicated by color alone
+comfortable touch targets
+REUSABLE COMPONENT CONSISTENCY
+Consolidate where appropriate:
+AppShell
+HostShell
+ParticipantShell
+Header
+Navigation
+PageHeader
+Breadcrumbs
+StatusBadge
+SessionCodeCard
+SessionQRCode
+JoinLinkCard
+ParticipantList
+ParticipantRow
+QuizTemplateCard
+QuestionCard
+QuestionEditor
+TimerDisplay
+AnswerOption
+HostControls
+Leaderboard
+LeaderboardRow
+ConnectionStatus
+EmptyState
+LoadingState
+ErrorState
+ConfirmationDialog
+CopyButton
+SessionStatusPanel
+LiveStatsPanel
+MOCK / DEMO BOUNDARY
+Ensure all fake/demo data is centralized in a clearly identifiable location such as:
+src/demo/
+or:
+src/mocks/
+Do not scatter hardcoded fake production values throughout components.
+Ensure no real Tailscale hostname is hardcoded.
+Ensure Session Code generation remains mocked only.
+Ensure all production-authoritative behavior is represented as supplied state or callbacks.
+The final output should be a coherent, polished, responsive, production-quality frontend UI prototype suitable for selective integration into an existing React + TypeScript + Vite application.
