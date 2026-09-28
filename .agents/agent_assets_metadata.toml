@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "VtgOIzJDiECjYz4ttyMO-"
+uri = "file://signalhouse-project.zip"
+type = "unspecified"
+title = "Signalhouse project ZIP"
+description = "Complete Signalhouse project source, configuration, assets, and hidden project files. Dependencies, build output, caches, and Git metadata were excluded."
+logical_id = "240f1af5-e0b3-4517-8d22-df4bd0130e27"
+content_hash = "sha256:14be51eb620a73ff3c315db42149e2c57b9490d1cb31d5ceb44975f9b8598c66"
+size = 8303091
+mtime_ms = 1790614941562
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:2c9684a9-af81-466d-a9cb-ce1da84f7714/240f1af5-e0b3-4517-8d22-df4bd0130e27/135638a7-ea19-4317-b2ef-c652ca79170f"
+storage_version_token = "1790614945511389"
+content_type = "application/octet-stream"
